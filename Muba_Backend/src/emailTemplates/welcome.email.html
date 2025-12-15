@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to MUBAXPRESS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .wrapper {
+        width: 100%;
+        table-layout: fixed;
+        padding: 60px 20px;
+      }
+      .container {
+        max-width: 680px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        position: relative;
+      }
+      .header {
+        background: linear-gradient(135deg, #2db568 0%, #34d771 100%);
+        padding: 50px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 1px,
+          transparent 1px
+        );
+        background-size: 20px 20px;
+        animation: float 20s infinite linear;
+      }
+      @keyframes float {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+      .logo-container {
+        position: relative;
+        z-index: 2;
+      }
+      .logo-container {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 25px 40px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+      .logo-text {
+        color: white;
+        font-weight: 800;
+        font-size: 32px;
+        letter-spacing: -1px;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, #ffffff 0%, #e8f5e8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .content {
+        padding: 0px 0px 0px 0px;
+        text-align: center;
+      }
+      .inner-content {
+        padding: 30px 30px;
+      }
+      .welcome-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #2db568, #34d771);
+        color: white;
+        padding: 8px 24px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(45, 181, 104, 0.3);
+      }
+      .content h1 {
+        font-size: 36px;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 20px;
+        line-height: 1.2;
+        letter-spacing: -1px;
+      }
+      .content .subtitle {
+        font-size: 20px;
+        color: #4a5568;
+        margin-bottom: 35px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+      .content p {
+        font-size: 18px;
+        line-height: 1.8;
+        color: #2d3748;
+        margin-bottom: 40px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .button-wrapper {
+        margin: 50px 0;
+      }
+      .button {
+        display: inline-block;
+        padding: 18px 40px;
+        background: linear-gradient(135deg, #2db568, #34d771);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 25px rgba(45, 181, 104, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(45, 181, 104, 0.4);
+      }
+      .button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+      .button:hover::before {
+        left: 100%;
+      }
+      .features {
+        display: none;
+      }
+      .feature {
+        display: none;
+      }
+      .feature-icon {
+        display: none;
+      }
+      .feature h3 {
+        display: none;
+      }
+      .feature p {
+        display: none;
+      }
+      .footer {
+        background: #f8fafc;
+        padding: 40px 50px;
+        text-align: center;
+        border-top: 1px solid #e2e8f0;
+      }
+      .footer p {
+        color: #718096;
+        font-size: 14px;
+        margin: 10px 0;
+        line-height: 1.6;
+      }
+      .footer a {
+        color: #2db568;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      .university-info {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
+      }
+      .university-info .uni-name {
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 15px;
+      }
+
+      @media (max-width: 640px) {
+        .wrapper {
+          padding: 20px 10px;
+        }
+        .content,
+        .footer {
+          padding: 40px 30px;
+        }
+        .content h1 {
+          font-size: 28px;
+        }
+        .content .subtitle {
+          font-size: 18px;
+        }
+        .features {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <table
+        class="container"
+        role="presentation"
+        align="center"
+        width="680"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+      >
+        <tr>
+          <td class="header">
+            <div class="logo-container">
+              <div class="logo-text">MUBAXPRESS</div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="content">
+            <img
+              src="https://res.cloudinary.com/daaoayc7l/image/upload/v1756585940/MubaXpress_ix57pr.png"
+              alt="MubaXpress Logo"
+              width="full"
+              style="display: block"
+            />
+            <div class="inner-content">
+              <div class="welcome-badge">Welcome Aboard</div>
+              <h1>Hello, {{user_name}}!</h1>
+              <p class="subtitle">
+                Ready to transform your campus shopping experience?
+              </p>
+              <p>
+                Welcome to MUBAXPRESS, your premier destination for student life
+                essentials. Join a trusted community where you can effortlessly
+                buy and sell textbooks, electronics, dorm essentials, and so
+                much more.
+              </p>
+
+              <div class="features">
+                <div class="feature">
+                  <div class="feature-icon">📚</div>
+                  <h3>Textbooks</h3>
+                  <p>Find affordable textbooks for all your courses</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">💻</div>
+                  <h3>Electronics</h3>
+                  <p>Buy and sell laptops, phones, and gadgets</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">🏠</div>
+                  <h3>Dorm Essentials</h3>
+                  <p>Everything you need for comfortable campus living</p>
+                </div>
+              </div>
+
+              <div class="button-wrapper">
+                <a
+                  href="https://muba-college-ecommerce.vercel.app/marketplace"
+                  class="button"
+                  >Start Shopping Now →</a
+                >
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="footer">
+            <p>
+              Need help getting started? Our support team is here for you at
+              <a href="mailto:sellzamuba@gmail.com">sellzamuba@gmail.com</a>
+            </p>
+            <p>Follow us for the latest updates and campus deals!</p>
+            <div class="university-info">
+              <p class="uni-name">Ahmadu Bello University, Zaria</p>
+              <p>&copy; 2025 MUBAXPRESS. All Rights Reserved.</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

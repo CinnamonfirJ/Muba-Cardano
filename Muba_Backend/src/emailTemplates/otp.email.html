@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Verification Code</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .wrapper {
+        width: 100%;
+        table-layout: fixed;
+        padding: 60px 20px;
+      }
+      .container {
+        max-width: 680px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        position: relative;
+      }
+      .header {
+        background: linear-gradient(135deg, #2db568 0%, #34d771 100%);
+        padding: 50px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 1px,
+          transparent 1px
+        );
+        background-size: 20px 20px;
+        animation: float 20s infinite linear;
+      }
+      @keyframes float {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+      .logo-container {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 25px 40px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 2;
+      }
+      .logo-text {
+        color: white;
+        font-weight: 800;
+        font-size: 32px;
+        letter-spacing: -1px;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, #ffffff 0%, #e8f5e8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .content {
+        padding: 0px 0px 0px 0px;
+        text-align: center;
+      }
+      .inner-content {
+        padding: 30px 30px;
+      }
+      .verification-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #805ad5, #9f7aea);
+        color: white;
+        padding: 8px 24px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(128, 90, 213, 0.3);
+      }
+      .content h1 {
+        font-size: 36px;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 20px;
+        line-height: 1.2;
+        letter-spacing: -1px;
+      }
+      .content .subtitle {
+        font-size: 20px;
+        color: #4a5568;
+        margin-bottom: 35px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+      .content p {
+        font-size: 18px;
+        line-height: 1.8;
+        color: #2d3748;
+        margin-bottom: 25px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .otp-container {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 20px;
+        padding: 40px;
+        margin: 40px auto;
+        max-width: 400px;
+        border: 2px solid #e2e8f0;
+        position: relative;
+        overflow: hidden;
+      }
+      .otp-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #2db568, #34d771);
+      }
+      .otp-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .otp-code {
+        font-size: 48px;
+        font-weight: 800;
+        color: #2db568;
+        letter-spacing: 12px;
+        font-family: "Courier New", monospace;
+        text-shadow: 0 2px 4px rgba(45, 181, 104, 0.2);
+        margin: 0;
+        line-height: 1;
+      }
+      .expiry-container {
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 40px auto;
+        max-width: 450px;
+      }
+      .expiry-note {
+        font-size: 15px;
+        color: #c53030;
+        margin: 0;
+        font-weight: 500;
+      }
+      .security-note {
+        background: #f0fff4;
+        border: 1px solid #9ae6b4;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 30px auto;
+        max-width: 450px;
+        font-size: 15px;
+        color: #22543d;
+        line-height: 1.6;
+      }
+      .security-note strong {
+        color: #1a365d;
+      }
+      .footer {
+        background: #f8fafc;
+        padding: 40px 50px;
+        text-align: center;
+        border-top: 1px solid #e2e8f0;
+      }
+      .footer p {
+        color: #718096;
+        font-size: 14px;
+        margin: 10px 0;
+        line-height: 1.6;
+      }
+      .footer a {
+        color: #2db568;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      .university-info {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
+      }
+      .university-info .uni-name {
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 15px;
+      }
+
+      @media (max-width: 640px) {
+        .wrapper {
+          padding: 20px 10px;
+        }
+        .content,
+        .footer {
+          padding: 40px 30px;
+        }
+        .content h1 {
+          font-size: 28px;
+        }
+        .content .subtitle {
+          font-size: 18px;
+        }
+        .otp-container {
+          padding: 30px 20px;
+        }
+        .otp-code {
+          font-size: 36px;
+          letter-spacing: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <table
+        class="container"
+        role="presentation"
+        align="center"
+        width="680"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+      >
+        <tr>
+          <td class="header">
+            <div class="logo-container">
+              <div class="logo-text">MUBAXPRESS</div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="content">
+            <img
+              src="https://res.cloudinary.com/daaoayc7l/image/upload/v1756585940/MubaXpress_ix57pr.png"
+              alt="MubaXpress Logo"
+              width="full"
+              style="display: block"
+            />
+            <div class="inner-content">
+              <div class="verification-badge">Verification Required</div>
+              <h1>Your Verification Code</h1>
+              <p class="subtitle">Complete your secure authentication</p>
+
+              <p>
+                Use the code below to complete your verification. This code is
+                unique to your account and should not be shared with anyone.
+              </p>
+
+              <div class="otp-container">
+                <div class="otp-label">Your Code</div>
+                <div class="otp-code">{{otp}}</div>
+              </div>
+
+              <div class="expiry-container">
+                <p class="expiry-note">⏰ This code expires in 10 minutes</p>
+              </div>
+
+              <div class="security-note">
+                <strong>Security Reminder:</strong> MUBAXPRESS will never ask
+                you to share this code via phone, email, or any other method.
+                Keep it confidential!
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="footer">
+            <p>
+              If you didn't request this code, you can safely ignore this email.
+            </p>
+            <p>
+              Need help? Contact our support team at
+              <a href="mailto:sellzamuba@gmail.com">sellzamuba@gmail.com</a>
+            </p>
+            <div class="university-info">
+              <p class="uni-name">Ahmadu Bello University, Zaria</p>
+              <p>&copy; 2025 MUBAXPRESS. All Rights Reserved.</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
