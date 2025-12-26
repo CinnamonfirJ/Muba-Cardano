@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Loader2,
   Share2,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import {

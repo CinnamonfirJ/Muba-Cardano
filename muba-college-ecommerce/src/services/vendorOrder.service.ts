@@ -95,3 +95,13 @@ export const markAsReadyForPickup = async (orderId: string) => {
   }>(`/api/v1/delivery/mark-ready/${orderId}`);
   return response.data;
 };
+
+export const vendorOrderService = {
+  getVendorOrders,
+  getVendorOrder,
+  updateVendorOrder,
+  markAsReadyForPickup,
+};
+
+export const VendorOrderService = vendorOrderService;
+export default vendorOrderService;

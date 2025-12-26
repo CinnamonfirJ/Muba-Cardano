@@ -52,3 +52,6 @@ export const orderService = {
 
   // VENDOR METHODS REMOVED - Use vendorOrder.service.ts
 };
+
+export const OrderService = orderService;
+export default orderService;

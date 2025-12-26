@@ -9,8 +9,11 @@ export interface Store {
   owner: {
     _id: string;
     firstname: string;
+    lastname?: string;
     email: string;
-  }; // Changed from array to single object
+    successful_deliveries?: number;
+    postOfficeStatus?: string;
+  }; 
   rating: number;
   followers: string[];
   reviewsCount: number;
@@ -198,3 +201,6 @@ export const storeService = {
     return response.data;
   },
 };
+
+export const StoreService = storeService;
+export default storeService;

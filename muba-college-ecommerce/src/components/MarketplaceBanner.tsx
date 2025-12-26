@@ -128,7 +128,7 @@ const MarketplaceBanner = () => {
           {/* Right Image */}
           <div className='flex justify-center md:justify-end md:w-1/2'>
             <img
-              src={banner}
+              src={typeof banner === "string" ? banner : (banner as any).src}
               alt='Flash Sale Products'
               className='w-full max-w-sm md:max-w-md h-auto object-contain'
             />

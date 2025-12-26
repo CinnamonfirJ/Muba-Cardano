@@ -214,3 +214,6 @@ export const authService = {
     return !!userData;
   },
 };
+
+export const AuthService = authService;
+export default authService;

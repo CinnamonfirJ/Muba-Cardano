@@ -3,14 +3,14 @@ import { storeService, type Store } from "../services/storeService";
 import toast from "react-hot-toast";
 
 export const useStores = (params?: any) => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["stores", params],
     queryFn: () => storeService.getAllStores(params),
   });
 };
 
 export const useStore = (id: string) => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["store", id],
     queryFn: () => storeService.getStoreById(id),
     enabled: !!id,
@@ -18,7 +18,7 @@ export const useStore = (id: string) => {
 };
 
 export const useMyStores = () => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["myStores"],
     queryFn: () => storeService.getMyStores(),
   });
@@ -122,7 +122,7 @@ export const useRateStore = () => {
 };
 
 export const useStoreReviews = (id: string) => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["storeReviews", id],
     queryFn: () => storeService.getStoreReviews(id),
     enabled: !!id,

@@ -146,101 +146,136 @@ export default function PostOfficeScanner() {
   }
 
   return (
-    <div className='mx-auto py-8 max-w-md container'>
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Box className='w-6 h-6 text-blue-600' />
-            Post Office Scanner
-          </CardTitle>
-          <CardDescription>
-            Scan Vendor packages to confirm receipt (Handoff).
+    <div className='mx-auto py-10 px-4 max-w-lg container min-h-screen pb-20'>
+      <div className="mb-8 text-center space-y-2">
+          <div className="bg-blue-600/10 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-blue-100">
+              <Box className='w-8 h-8 text-blue-600' />
+          </div>
+          <h1 className="text-3xl font-black tracking-tight font-mona text-gray-900">Logistics Portal</h1>
+          <p className="text-muted-foreground font-medium">Campus Post Office Verification System</p>
+      </div>
+
+      <Card className="rounded-[2.5rem] border-none bg-white/70 backdrop-blur-xl shadow-2xl overflow-hidden border border-white/40">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className='text-xl font-bold font-mona'>Scanner Interface</CardTitle>
+          <CardDescription className="font-medium">
+            Verify vendor handoffs and student pickups instantly.
           </CardDescription>
         </CardHeader>
-        <CardContent className='space-y-6'>
+        <CardContent className='space-y-6 pt-2'>
           
           {/* Default View: Buttons and Manual Entry */}
           {!isScanning && !scanResult && (
-             <div className='space-y-4'>
+             <div className='space-y-6 animate-in fade-in zoom-in duration-500'>
                  <Button 
                     onClick={() => setIsScanning(true)} 
-                    className='bg-blue-600 hover:bg-blue-700 py-8 w-full text-lg'
+                    className='bg-blue-600 hover:bg-blue-700 py-10 w-full text-xl font-black rounded-3xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] active:scale-95 group'
                  >
-                    Start Camera Scan
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-3">
+                            <Search className="group-hover:rotate-12 transition-transform" />
+                            Launch Camera
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">High-Speed Scanner</span>
+                    </div>
                  </Button>
                  
                  <div className='relative'>
                     <div className='absolute inset-0 flex items-center'>
-                        <span className='border-t w-full' />
+                        <span className='border-t border-gray-100 w-full' />
                     </div>
-                    <div className='relative flex justify-center text-xs uppercase'>
-                        <span className='bg-white px-2 text-muted-foreground'>Or enter manually</span>
+                    <div className='relative flex justify-center text-[10px] font-black uppercase tracking-[0.3em]'>
+                        <span className='bg-white/80 px-4 text-gray-400'>Manual Override</span>
                     </div>
                 </div>
 
-                <form onSubmit={handleManualSubmit} className='flex gap-2'>
-                    <div className='relative flex-1'>
-                        <Search className='top-2.5 left-2 absolute w-4 h-4 text-muted-foreground' />
+                <form onSubmit={handleManualSubmit} className='flex gap-3'>
+                    <div className='relative flex-1 group'>
+                        <Search className='top-1/2 -translate-y-1/2 left-4 absolute w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors' />
                         <input
                             type='text'
-                            placeholder='Order ID...'
-                            className='flex bg-background file:bg-transparent disabled:opacity-50 px-3 py-2 pl-8 border border-input file:border-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-background focus-visible:ring-offset-2 w-full h-10 file:font-medium placeholder:text-muted-foreground text-sm file:text-sm disabled:cursor-not-allowed'
+                            placeholder='Order Reference ID...'
+                            className='flex bg-gray-50/50 file:bg-transparent disabled:opacity-50 px-5 py-4 pl-11 border border-transparent file:border-0 rounded-2xl focus-visible:outline-none focus:bg-white focus:border-blue-100 focus:ring-4 focus:ring-blue-50/50 transition-all w-full h-14 font-bold placeholder:text-gray-300 text-sm select-all'
                             value={manualCode}
                             onChange={(e) => setManualCode(e.target.value)}
                         />
                     </div>
-                    <Button type='submit'>Check</Button>
+                    <Button type='submit' className="h-14 px-6 rounded-2xl bg-gray-900 font-bold hover:bg-black transition-all">
+                        Fetch
+                    </Button>
                 </form>
              </div>
           )}
 
           {/* Scanning View: Camera Frame */}
           {isScanning && (
-              <div className='flex flex-col items-center'>
-                  <div id="reader" className='bg-black border-2 border-slate-200 rounded-lg w-full h-[300px] overflow-hidden'></div>
+              <div className='flex flex-col items-center animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500'>
+                  <div className="relative w-full aspect-square max-w-[320px] rounded-[2rem] overflow-hidden border-4 border-blue-600/20 shadow-2xl bg-black group">
+                      <div id="reader" className='w-full h-full'></div>
+                      {/* Scanner Overlay UI */}
+                      <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-blue-500 rounded-2xl animate-pulse ring-[100vw] ring-black/20" />
+                      <div className="absolute top-0 left-0 w-full h-0.5 bg-blue-500 shadow-[0_0_15px_blue] animate-[scan-line_2s_ease-in-out_infinite]" />
+                  </div>
+                  
+                  <div className="mt-8 text-center space-y-2">
+                       <p className="text-xs font-black uppercase tracking-widest text-[#3bb85e] animate-pulse">Scanning Active</p>
+                       <p className="text-muted-foreground text-[10px] font-bold">Align the QR code within the frame</p>
+                  </div>
+
                   <Button 
-                    variant="outline" 
-                    className='mt-4'
+                    variant="ghost" 
+                    className='mt-6 rounded-full px-8 text-gray-500 font-bold hover:bg-gray-100'
                     onClick={stopScanner}
                   >
-                      Cancel
+                      Cancel Scanning
                   </Button>
               </div>
           )}
 
           {/* Result View: Confirmation */}
           {scanResult && (
-              <div className='animate-in duration-300 fade-in zoom-in'>
-                  <div className='space-y-4 bg-green-50 p-6 border border-green-200 rounded-lg text-center'>
-                      <div className='flex justify-center items-center bg-green-100 mx-auto rounded-full w-12 h-12'>
-                          <CheckCircle className='w-6 h-6 text-green-600' />
+              <div className='animate-in duration-500 slide-in-from-bottom-12 fade-in'>
+                  <div className='space-y-6 bg-gray-50/50 backdrop-blur-md p-8 border border-white rounded-[2rem] text-center shadow-inner'>
+                      <div className='flex justify-center items-center bg-[#3bb85e]/10 border border-[#3bb85e]/20 mx-auto rounded-3xl w-20 h-20 shadow-sm animate-bounce'>
+                          <CheckCircle className='w-10 h-10 text-[#3bb85e]' />
                       </div>
-                      <div>
-                          <p className='font-medium text-green-800 text-sm'>Scanned Successfully</p>
-                          <p className='font-mono font-bold text-xl tracking-wider select-all'>{parsedData?.orderId}</p>
-                          {parsedData?.type && <p className='text-green-600 text-xs uppercase'>{parsedData.type} Mode</p>}
+                      <div className="space-y-1">
+                          <p className='text-[10px] font-black text-gray-400 uppercase tracking-widest'>Data Decoded</p>
+                          <p className='font-black text-2xl tracking-tighter text-gray-900 break-all select-all'>#{parsedData?.orderId}</p>
+                          <div className="inline-flex items-center gap-2 mt-2 bg-[#3bb85e]/10 px-3 py-1 rounded-full">
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#3bb85e] animate-pulse" />
+                              <p className='text-[#3bb85e] text-[10px] font-black uppercase tracking-widest'>{isPickup ? 'PICKUP' : 'HANDOFF'} AUTHORIZED</p>
+                          </div>
                       </div>
                       
-                      <Button 
-                        onClick={handleAction} 
-                        className={`w-full ${isPickup ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        disabled={handoffMutation.isPending}
-                      >
-                          {handoffMutation.isPending ? (
-                              <>
-                                <Loader2 className='mr-2 w-4 h-4 animate-spin' />
-                                Processing Blockchain Proof...
-                              </>
-                          ) : (isPickup ? "Confirm Delivery" : "Confirm Handoff")}
-                      </Button>
+                      <div className="pt-4 space-y-3">
+                        <Button 
+                            onClick={handleAction} 
+                            className={`w-full py-8 text-lg font-black rounded-2xl shadow-lg transition-all active:scale-95 ${isPickup ? 'bg-[#3bb85e] hover:bg-[#2d8f4a] shadow-green-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
+                            disabled={handoffMutation.isPending}
+                        >
+                            {handoffMutation.isPending ? (
+                                <div className="flex items-center gap-3">
+                                    <Loader2 className='w-6 h-6 animate-spin' />
+                                    <span>Verifying Chain...</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <Box className="w-5 h-5" />
+                                    {isPickup ? "Process Delivery" : "Accept Handoff"}
+                                </div>
+                            )}
+                        </Button>
 
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => { setScanResult(null); setParsedData(null); }}
-                        className='text-sm'
-                      >
-                          Scan Next
-                      </Button>
+                        <Button 
+                            variant="ghost" 
+                            onClick={() => { setScanResult(null); setParsedData(null); }}
+                            className='w-full font-bold text-gray-400 hover:text-gray-600 transition-colors'
+                        >
+                            Reset Scanner
+                        </Button>
+                      </div>
                   </div>
               </div>
           )}
@@ -248,15 +283,44 @@ export default function PostOfficeScanner() {
         </CardContent>
       </Card>
       
-      <div className='bg-blue-50 mt-8 p-4 border border-blue-100 rounded-lg text-blue-900 text-sm'>
-          <p className='mb-1 font-bold'>How it works:</p>
-          <ul className='space-y-1 list-disc list-inside'>
-              <li>Scan the Vendor's package QR code.</li>
-              <li>Confirming generates a <strong>Proof-of-Handoff</strong> on Cardano.</li>
-              <li>This action officially transfers custody to the Post Office.</li>
-              <li>For student pickups, the <strong>Student</strong> must verify using their app.</li>
-          </ul>
+      <div className='mt-12 space-y-4'>
+           <div className="flex items-center gap-2 px-4">
+                <div className="h-px bg-gray-100 flex-1" />
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Protocol Instructions</p>
+                <div className="h-px bg-gray-100 flex-1" />
+           </div>
+           
+           <div className='gap-4 grid grid-cols-1 sm:grid-cols-2'>
+              {[
+                { title: 'Scan', text: 'Capture the secure QR code from the vendor package.' },
+                { title: 'Verify', text: 'System cross-references the order against Cardano records.' },
+                { title: 'Confirm', text: 'Confirmation triggers an immutable Proof-of-Custody.' },
+                { title: 'Release', text: 'Custody successfully transfers to the Post Office.' }
+              ].map((step, i) => (
+                <div key={i} className="bg-white/50 border border-white/80 p-4 rounded-2xl shadow-sm space-y-1">
+                    <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-600 text-[10px] font-black text-white flex items-center justify-center">
+                            {i + 1}
+                        </div>
+                        <h4 className="font-bold text-xs uppercase tracking-wider text-gray-700">{step.title}</h4>
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-500 leading-relaxed italic">
+                        {step.text}
+                    </p>
+                </div>
+              ))}
+           </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes scan-line {
+            0%, 100% { top: 0%; }
+            50% { top: 100%; }
+        }
+        #reader__status_span { display: none !important; }
+        #reader__header_message { display: none !important; }
+        #reader video { border-radius: 1.5rem !important; }
+      `}</style>
     </div>
   );
 }

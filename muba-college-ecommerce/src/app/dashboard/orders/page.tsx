@@ -325,96 +325,93 @@ const OrdersPage = () => {
   }
 
   return (
-    <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2 text-lg sm:text-xl'>
-            <Package className='w-5 h-5' />
-            Order History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Filter */}
-          <div className='flex sm:flex-row flex-col gap-3 sm:gap-4 mb-6'>
-            <div className='relative flex-1'>
-              <Search className='top-3 left-3 absolute w-4 h-4 text-gray-400' />
+    <div className="space-y-6 pb-20">
+      <div className="px-4 pt-4">
+          <h1 className="font-bold text-3xl tracking-tight font-mona flex items-center gap-3">
+            <Package className="text-[#3bb85e] w-8 h-8" />
+            My Orders
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Track and manage all your campus purchases
+          </p>
+      </div>
+
+      <div className="px-4 space-y-4 sticky top-0 z-20 bg-white/50 backdrop-blur-md pt-2 pb-4 border-b">
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="top-1/2 -translate-y-1/2 left-3 absolute w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder='Search orders...'
+                placeholder="Search by ID or Product..."
+                className="pl-10 rounded-full border-gray-200 focus-visible:ring-[#3bb85e] bg-white/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 text-sm sm:text-base'
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className='w-full sm:w-48 text-sm sm:text-base'>
-                <SelectValue placeholder='Filter by status' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='all'>All Orders</SelectItem>
-                <SelectItem value='pending_payment'>Pending Payment</SelectItem>
-                <SelectItem value='order_confirmed'>Confirmed</SelectItem>
-                <SelectItem value='handed_to_post_office'>At Post Office</SelectItem>
-                <SelectItem value='ready_for_pickup'>Ready for Pickup</SelectItem>
-                <SelectItem value='delivered'>Delivered</SelectItem>
-                <SelectItem value='cancelled'>Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 shrink-0">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-[160px] rounded-full border-gray-200 bg-white/50">
+                        <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                        <SelectItem value="all">All Orders</SelectItem>
+                        <SelectItem value="pending_payment">To Pay</SelectItem>
+                        <SelectItem value="order_confirmed">Confirmed</SelectItem>
+                        <SelectItem value="handed_to_post_office">At Post Office</SelectItem>
+                        <SelectItem value="ready_for_pickup">Ready</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
           </div>
+      </div>
 
-          {/* Orders Tabs */}
-          <Tabs defaultValue='all' className='space-y-4'>
-            <TabsList className='gap-1 grid grid-cols-4 lg:grid-cols-7 w-full h-auto'>
-              <TabsTrigger value='all' className='text-[10px] sm:text-xs'>
-                All ({ordersByStatus.all.length})
-              </TabsTrigger>
-              <TabsTrigger value='pending_payment' className='text-[10px] sm:text-xs'>
-                Pending ({ordersByStatus.pending_payment.length})
-              </TabsTrigger>
-              <TabsTrigger value='order_confirmed' className='text-[10px] sm:text-xs'>
-                Confirmed ({ordersByStatus.order_confirmed.length})
-              </TabsTrigger>
-              <TabsTrigger value='handed_to_post_office' className='text-[10px] sm:text-xs'>
-                Handoff ({ordersByStatus.handed_to_post_office.length})
-              </TabsTrigger>
-              <TabsTrigger value='ready_for_pickup' className='text-[10px] sm:text-xs'>
-                Ready ({ordersByStatus.ready_for_pickup.length})
-              </TabsTrigger>
-              <TabsTrigger value='delivered' className='text-[10px] sm:text-xs'>
-                Finished ({ordersByStatus.delivered.length})
-              </TabsTrigger>
-              <TabsTrigger value='cancelled' className='text-[10px] sm:text-xs'>
-                Cancelled ({ordersByStatus.cancelled.length})
-              </TabsTrigger>
+      <div className="px-4">
+          <Tabs defaultValue="all" className="space-y-6">
+            <TabsList className="bg-transparent h-auto p-0 flex overflow-x-auto no-scrollbar gap-2 pb-1">
+              {[
+                { id: 'all', label: 'All', count: ordersByStatus.all.length },
+                { id: 'pending_payment', label: 'To Pay', count: ordersByStatus.pending_payment.length },
+                { id: 'order_confirmed', label: 'Processing', count: ordersByStatus.order_confirmed.length },
+                { id: 'handed_to_post_office', label: 'Shipping', count: ordersByStatus.handed_to_post_office.length },
+                { id: 'ready_for_pickup', label: 'Ready', count: ordersByStatus.ready_for_pickup.length },
+                { id: 'delivered', label: 'Completed', count: ordersByStatus.delivered.length },
+                { id: 'cancelled', label: 'Cancelled', count: ordersByStatus.cancelled.length },
+              ].map((tab) => (
+                <TabsTrigger 
+                  key={tab.id}
+                  value={tab.id} 
+                  className="rounded-full px-4 py-2 data-[state=active]:bg-[#3bb85e] data-[state=active]:text-white border border-gray-100 bg-white shadow-sm font-bold text-xs whitespace-nowrap transition-all hover:scale-105"
+                >
+                  {tab.label} <span className="ml-1 opacity-60 text-[10px]">{tab.count}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
 
             {Object.entries(ordersByStatus).map(([status, statusOrders]) => (
-              <TabsContent key={status} value={status}>
+              <TabsContent key={status} value={status} className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {statusOrders.length === 0 ? (
-                  <div className='py-12 text-center'>
-                    <Package className='mx-auto mb-4 w-12 h-12 text-gray-400' />
-                    <h3 className='mb-2 font-medium text-gray-900 text-base sm:text-lg'>
-                      No {status === "all" ? "" : status} orders found
-                    </h3>
-                    <p className='px-4 text-gray-600 text-sm sm:text-base'>
-                      {status === "all"
-                        ? "You haven't placed any orders yet."
-                        : `You don't have any ${status} orders.`}
-                    </p>
+                  <Card className="glass-card py-20 border-dashed text-center">
+                    <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Package className="w-10 h-10 text-gray-300" />
+                    </div>
+                    <p className="text-gray-500 font-medium">No {status === "all" ? "" : status.replace('_', ' ')} orders yet</p>
+                    <p className="text-gray-400 text-sm mt-1 px-8">Browse the marketplace and start shopping!</p>
                     {(searchQuery || statusFilter !== "all") && (
                       <Button
                         onClick={() => {
                           setSearchQuery("");
                           setStatusFilter("all");
                         }}
-                        variant='outline'
-                        className='mt-4'
+                        variant="link"
+                        className="mt-2 text-[#3bb85e] font-bold"
                       >
-                        Clear Filters
+                        Clear Searches
                       </Button>
                     )}
-                  </div>
+                  </Card>
                 ) : (
-                  <div className='space-y-4'>
+                  <div className="space-y-4">
                     {statusOrders.map((order) => (
                       <OrderCard key={order._id} order={order} />
                     ))}
@@ -423,8 +420,7 @@ const OrdersPage = () => {
               </TabsContent>
             ))}
           </Tabs>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };

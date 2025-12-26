@@ -84,7 +84,7 @@ export default function AdminLayout({
           className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-slate-800"
           onClick={() => {
               logout();
-              router.push("/auth/sign-in");
+              router.push("/login");
           }}
         >
           <LogOut className="w-5 h-5 mr-3" />

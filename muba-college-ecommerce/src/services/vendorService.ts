@@ -134,3 +134,6 @@ export const vendorService = {
     return response.data;
   },
 };
+
+export const VendorService = vendorService;
+export default vendorService;

@@ -136,7 +136,7 @@ export default function ProductForm({ storeId, initialData, isEditing = false }:
 
     if (isEditing) {
       updateProduct(
-        { productId: initialData._id, data: formData as any }, // strict typing issue fix later
+        { id: initialData._id, data: formData as any }, 
         {
           onSuccess: () => {
             toast.success("Product updated successfully!");

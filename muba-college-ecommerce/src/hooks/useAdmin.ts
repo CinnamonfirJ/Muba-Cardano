@@ -3,21 +3,21 @@ import { adminService } from "../services/adminService";
 import toast from "react-hot-toast";
 
 export const useAdminStats = () => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["adminStats"],
     queryFn: () => adminService.getStats(),
   });
 };
 
 export const useAdminUsers = (page = 1, limit = 10, search = "") => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["adminUsers", page, limit, search],
     queryFn: () => adminService.getUsers(page, limit, search),
   });
 };
 
 export const useAdminStores = (page = 1, limit = 10, status = "all") => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["adminStores", page, limit, status],
     queryFn: () => adminService.getStores(page, limit, status),
   });

@@ -45,3 +45,6 @@ export const auditService = {
   // In the future, we could add methods to fetch audit history
   // async getAuditHistory(orderId: string) { ... }
 };
+
+export const AuditService = auditService;
+export default auditService;

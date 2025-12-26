@@ -7,7 +7,7 @@ import {
 import toast from "react-hot-toast";
 
 export const useProducts = (filters?: ProductFilters) => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["products", filters],
     queryFn: () => productService.getAllProducts(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -34,7 +34,7 @@ export const useInfiniteProducts = (filters: ProductFilters) => {
 };
 
 export const useProduct = (id: string) => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["product", id],
     queryFn: () => productService.getProductById(id),
     enabled: !!id,
@@ -42,7 +42,7 @@ export const useProduct = (id: string) => {
 };
 
 export const useStoreProducts = (storeId: string, filters?: any) => {
-  return useQuery({
+  return useQuery<any>({
     queryKey: ["storeProducts", storeId, filters],
     queryFn: () => productService.getProductsByStore(storeId, filters),
     enabled: !!storeId,

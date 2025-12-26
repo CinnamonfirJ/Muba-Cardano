@@ -8,33 +8,30 @@ interface AppConfig {
 
 // Function to get environment variables safely
 const getEnvVar = (key: string, defaultValue = ""): string => {
-  // For Vite-based React apps
-  if (typeof import.meta !== "undefined" && import.meta.env) {
-    return import.meta.env[`VITE_${key}`] || defaultValue;
-  }
-
-  // For Create React App
+  // For Next.js (Server and Client with NEXT_PUBLIC_ prefix)
   if (typeof process !== "undefined" && process.env) {
-    return process.env[`REACT_APP_${key}`] || defaultValue;
+    return (
+      process.env[`NEXT_PUBLIC_${key}`] ||
+      process.env[`VITE_${key}`] ||
+      process.env[`REACT_APP_${key}`] ||
+      process.env[key] ||
+      defaultValue
+    );
   }
 
-  // Fallback for browser environment
   return defaultValue;
 };
 
 // Determine if we're in development
 const isDevelopment = (): boolean => {
-  if (typeof import.meta !== "undefined" && import.meta.env) {
-    return import.meta.env.DEV || import.meta.env.MODE === "development";
-  }
-
   if (typeof process !== "undefined" && process.env) {
     return process.env.NODE_ENV === "development";
   }
 
   return (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
   );
 };
 

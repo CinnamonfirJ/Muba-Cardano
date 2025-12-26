@@ -41,8 +41,10 @@ export interface AdminStats {
 
 export const adminService = {
   // Get all users
-  async getUsers(): Promise<User[]> {
-    const response = await api.get("/api/v1/admin/users");
+  async getUsers(page = 1, limit = 10, search = ""): Promise<User[]> {
+    const response = await api.get("/api/v1/admin/users", {
+      params: { page, limit, q: search },
+    });
     return response.data.data;
   },
 
@@ -98,6 +100,24 @@ export const adminService = {
     return response.data.data;
   },
 
+  async getStats(): Promise<AdminStats> {
+    return this.getDashboardStats();
+  },
+
+  // Get all stores for admin
+  async getStores(page = 1, limit = 10, status = "all"): Promise<any[]> {
+    const response = await api.get("/api/v1/admin/stores", {
+      params: { page, limit, status },
+    });
+    return response.data.data;
+  },
+
+  // Verify a store
+  async verifyStore(storeId: string): Promise<any> {
+    const response = await api.patch(`/api/v1/admin/stores/${storeId}/verify`);
+    return response.data;
+  },
+
   // Ban/Unban user
   async toggleUserBan(
     userId: string,
@@ -120,3 +140,6 @@ export const adminService = {
     return response.data.data;
   },
 };
+
+export const AdminService = adminService;
+export default adminService;

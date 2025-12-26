@@ -116,8 +116,8 @@ const StoreForm = ({ storeId }: StoreFormProps) => {
       });
 
       if (store.img) {
-        setCurrentImageUrl(store.img);
-        setImagePreview(store.img);
+        setCurrentImageUrl(store.img || "");
+        setImagePreview(store.img || "");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load store data");

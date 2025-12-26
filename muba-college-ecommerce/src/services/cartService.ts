@@ -84,3 +84,6 @@ export const cartService = {
     return response.data;
   },
 };
+
+export const CartService = cartService;
+export default cartService;

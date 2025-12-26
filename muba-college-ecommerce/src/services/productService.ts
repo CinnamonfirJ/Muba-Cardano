@@ -37,7 +37,14 @@ export interface Product {
   // Optional fields for different product types
   sizes?: (string | number)[];
   colors?: string[];
-  variants?: { name: string; options: string[] }[];
+  productType?: 'simple' | 'variable' | 'batch';
+  batchConfig?: {
+    minOrder: number;
+    currentOrder: number;
+    batchStatus: 'collecting' | 'ordered' | 'shipped';
+  };
+  variantType?: string;
+  variants?: any[]; 
   specifications?: { [key: string]: string };
   stockCount?: number;
   brand?: string;
@@ -202,3 +209,6 @@ export const productService = {
     return response.data;
   },
 };
+
+export const ProductService = productService;
+export default productService;

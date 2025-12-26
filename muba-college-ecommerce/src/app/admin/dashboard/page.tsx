@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2, DollarSign, Users, ShoppingBag, Store } from "lucide-react";
-import { formatCurrency } from "@/lib/utils"; // Assuming utils exist or I will inline
 import {
   ResponsiveContainer,
   BarChart,
@@ -29,13 +28,12 @@ const formatNaira = (amount: number) => {
 };
 
 export default function AdminDashboardPage() {
-  const { data: stats, isLoading, error } = useQuery({
+  const { data: stats, isLoading, error } = useQuery<any>({
     queryKey: ["adminStats"],
     queryFn: async () => {
       const response = await api.get("/api/v1/admin/stats");
       return response.data.data;
     },
-    // Use the auth context provided by wrapper, or ensure local storage has token
   });
 
   if (isLoading) {
