@@ -1,248 +1,262 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getVendorOrder, updateVendorOrder } from "@/services/vendorOrder.service";
-import { auditService } from "@/services/auditService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import api from "@/services/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, QrCode, CheckCircle, Package, User, Truck, AlertTriangle } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Loader2, Box, CheckCircle, Search } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function PostOfficeScannerPage() {
-  const [scanInput, setScanInput] = useState("");
-  const [scannedData, setScannedData] = useState<{
-    order_id: string;
-    action: "handoff" | "pickup";
-    seller_id?: string;
-    delivery_type?: string;
-  } | null>(null);
+interface ScanResult {
+  orderId: string;
+  type: "handoff" | "pickup";
+  timestamp: number;
+}
+
+export default function PostOfficeScanner() {
+  const [scanResult, setScanResult] = useState<string | null>(null);
+  const [parsedData, setParsedData] = useState<ScanResult | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [manualCode, setManualCode] = useState("");
   
-  const [order, setOrder] = useState<any>(null);
-  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-focus input for scanners
+  // Robust Scanner Lifecycle Management
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    let isMounted = true; 
 
-  const handleScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setScanError(null);
-    setOrder(null);
-    setScannedData(null);
-
-    try {
-      // Try to parse JSON from QR
-      // Handle cases where scanner might send just text or partial data if not configured correctly
-      // But we expect JSON format: {"order_id":"...","action":"..."}
-      const parsed = JSON.parse(scanInput);
-      
-      if (!parsed.order_id || !parsed.action) {
-        throw new Error("Invalid QR Code format");
-      }
-
-      setScannedData(parsed);
-      fetchOrderDetails(parsed.order_id);
-    } catch (err) {
-      // If JSON parse fails, maybe it's just the order ID manually entered?
-      if (scanInput.length > 5 && !scanInput.includes("{")) {
-         // Fallback: Assume Manual Entry of Order ID, default to Handoff (or ask user?)
-         // For now, let's treat manual entry as just looking up the order
-         setScannedData({
-             order_id: scanInput,
-             action: "handoff" // Default assumption or we could ask UI to choose
-         });
-         fetchOrderDetails(scanInput);
-      } else {
-        setScanError("Invalid QR Code. Please scan a valid Order QR.");
-      }
-    }
-  };
-
-  const fetchOrderDetails = async (id: string) => {
-    setIsLoadingOrder(true);
-    try {
-        // We use getVendorOrder as a generic "get order details" for the system
-        // In a real app, this would be a specialized "adminGetOrder"
-        const data = await getVendorOrder(id);
-        setOrder(data);
-    } catch (err) {
-        setScanError("Order not found or access denied.");
-    } finally {
-        setIsLoadingOrder(false);
-    }
-  };
-
-  const handleConfirmAction = async () => {
-    if (!scannedData || !order) return;
-    setIsProcessing(true);
-
-    try {
-        const targetStatus = scannedData.action === "handoff" ? "sent_to_post_office" : "delivered";
-        const actionLabel = scannedData.action === "handoff" ? "Vendor Handoff" : "Customer Pickup";
-
-        // 1. Audit to Cardano
-        await auditService.recordEvent({
-            order_id: order._id,
-            action: scannedData.action,
-            seller_id: order.vendor_id,
-            metadata: {
-                timestamp: Date.now(),
-                location: "Campus Post Office Main",
-                operator: "Staff_01" // Mock operator
-            }
-        });
-
-        // 2. Update Order Status
-        await updateVendorOrder(order._id, { status: targetStatus });
-
-        toast.success(`${actionLabel} confirmed successfully!`);
+    const initScanner = async () => {
+        if (!isScanning) return;
         
-        // Reset for next scan
-        setScanInput("");
-        setScannedData(null);
-        setOrder(null);
-        setTimeout(() => inputRef.current?.focus(), 100);
+        // Wait for DOM element to be available
+        await new Promise(resolve => setTimeout(resolve, 50)); 
+        if (!document.getElementById("reader")) {
+            console.error("Scanner element not found");
+            return;
+        }
 
-    } catch (err: any) {
-        toast.error("Failed to process transaction: " + err.message);
-    } finally {
-        setIsProcessing(false);
+        try {
+            // Cleanup existing instance if any
+            if (scannerRef.current) {
+                try { await scannerRef.current.stop(); } catch (e) { /* ignore */ }
+                try { await scannerRef.current.clear(); } catch (e) { /* ignore */ }
+            }
+
+            const html5QrCode = new Html5Qrcode("reader");
+            scannerRef.current = html5QrCode;
+
+            await html5QrCode.start(
+                { facingMode: "environment" }, 
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                },
+                (decodedText) => {
+                    if (isMounted) handleScanSuccess(decodedText);
+                },
+                (errorMessage) => {
+                     // Suppress frame errors
+                }
+            );
+        } catch (err) {
+            console.error("Failed to start scanner", err);
+            if (isMounted) {
+                // toast.error("Could not access camera. Ensure permissions are granted.");
+                setIsScanning(false);
+            }
+        }
+    };
+
+    if (isScanning) {
+        initScanner();
+    } else {
+        // Cleanup when scanning stops
+        if (scannerRef.current) {
+             scannerRef.current.stop().catch(err => console.error("Stop failed", err));
+        }
     }
+
+    return () => {
+        isMounted = false;
+        if (scannerRef.current && scannerRef.current.isScanning) {
+             scannerRef.current.stop().catch(() => {});
+             scannerRef.current.clear();
+        }
+    };
+  }, [isScanning]);
+
+  const stopScanner = () => {
+      setIsScanning(false);
   };
+
+  const handleScanSuccess = (decodedText: string) => {
+      // Logic to stop scanner is handled by the effect dependency change (setIsScanning(false))
+      setIsScanning(false);
+      setScanResult(decodedText);
+      try {
+          const data = JSON.parse(decodedText);
+          if (data.orderId) {
+             setParsedData(data); 
+          } else {
+             setParsedData({ orderId: decodedText, type: "handoff", timestamp: Date.now() }); 
+          }
+      } catch (e) {
+           setParsedData({ orderId: decodedText, type: "handoff", timestamp: Date.now() });
+      }
+  };
+
+  const isPickup = parsedData?.type === "pickup" || parsedData?.orderId?.includes("-");
+
+  const handoffMutation = useMutation({
+      mutationFn: async (orderId: string) => {
+          const response = await api.post("/api/v1/delivery/handover", { orderId });
+          return response.data;
+      },
+      onSuccess: (data) => {
+          const actionWord = isPickup ? "Delivery" : "Handoff";
+          toast.success(`${actionWord} Confirmed! Tx: ${data.data.handoffTxHash?.substring(0, 10)}${data.data.deliveryTxHash?.substring(0, 10)}...`);
+          setScanResult(null);
+          setParsedData(null);
+          setManualCode(""); 
+      },
+      onError: (err: any) => {
+          toast.error(err.response?.data?.message || "Handoff Failed");
+      }
+  });
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!manualCode.trim()) return;
+      handleScanSuccess(manualCode.trim());
+  }
+
+  const handleAction = () => {
+      if (!parsedData?.orderId) return;
+
+      handoffMutation.mutate(parsedData.orderId);
+  }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto min-h-screen bg-gray-50">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-          Campus Post Office
-        </h1>
-        <p className="text-gray-500 text-sm">Scanner Terminal</p>
-      </div>
+    <div className='mx-auto py-8 max-w-md container'>
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <Box className='w-6 h-6 text-blue-600' />
+            Post Office Scanner
+          </CardTitle>
+          <CardDescription>
+            Scan Vendor packages to confirm receipt (Handoff).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-6'>
+          
+          {/* Default View: Buttons and Manual Entry */}
+          {!isScanning && !scanResult && (
+             <div className='space-y-4'>
+                 <Button 
+                    onClick={() => setIsScanning(true)} 
+                    className='bg-blue-600 hover:bg-blue-700 py-8 w-full text-lg'
+                 >
+                    Start Camera Scan
+                 </Button>
+                 
+                 <div className='relative'>
+                    <div className='absolute inset-0 flex items-center'>
+                        <span className='border-t w-full' />
+                    </div>
+                    <div className='relative flex justify-center text-xs uppercase'>
+                        <span className='bg-white px-2 text-muted-foreground'>Or enter manually</span>
+                    </div>
+                </div>
 
-      {/* SEARCH / SCAN INPUT */}
-      <Card className="mb-6 shadow-md">
-        <CardContent className="pt-6">
-          <form onSubmit={handleScan} className="flex gap-2">
-            <Input 
-                ref={inputRef}
-                value={scanInput}
-                onChange={(e) => setScanInput(e.target.value)}
-                placeholder="Scan QR or enter Order ID..."
-                className="text-lg h-12"
-                autoComplete="off"
-            />
-            <Button type="submit" size="lg" className="h-12 bg-blue-600 hover:bg-blue-700">
-                <QrCode className="w-5 h-5 mr-2" />
-                Scan
-            </Button>
-          </form>
-          {scanError && (
-              <p className="mt-2 text-sm text-red-500 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-1" />
-                  {scanError}
-              </p>
+                <form onSubmit={handleManualSubmit} className='flex gap-2'>
+                    <div className='relative flex-1'>
+                        <Search className='top-2.5 left-2 absolute w-4 h-4 text-muted-foreground' />
+                        <input
+                            type='text'
+                            placeholder='Order ID...'
+                            className='flex bg-background file:bg-transparent disabled:opacity-50 px-3 py-2 pl-8 border border-input file:border-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-background focus-visible:ring-offset-2 w-full h-10 file:font-medium placeholder:text-muted-foreground text-sm file:text-sm disabled:cursor-not-allowed'
+                            value={manualCode}
+                            onChange={(e) => setManualCode(e.target.value)}
+                        />
+                    </div>
+                    <Button type='submit'>Check</Button>
+                </form>
+             </div>
           )}
+
+          {/* Scanning View: Camera Frame */}
+          {isScanning && (
+              <div className='flex flex-col items-center'>
+                  <div id="reader" className='bg-black border-2 border-slate-200 rounded-lg w-full h-[300px] overflow-hidden'></div>
+                  <Button 
+                    variant="outline" 
+                    className='mt-4'
+                    onClick={stopScanner}
+                  >
+                      Cancel
+                  </Button>
+              </div>
+          )}
+
+          {/* Result View: Confirmation */}
+          {scanResult && (
+              <div className='animate-in duration-300 fade-in zoom-in'>
+                  <div className='space-y-4 bg-green-50 p-6 border border-green-200 rounded-lg text-center'>
+                      <div className='flex justify-center items-center bg-green-100 mx-auto rounded-full w-12 h-12'>
+                          <CheckCircle className='w-6 h-6 text-green-600' />
+                      </div>
+                      <div>
+                          <p className='font-medium text-green-800 text-sm'>Scanned Successfully</p>
+                          <p className='font-mono font-bold text-xl tracking-wider select-all'>{parsedData?.orderId}</p>
+                          {parsedData?.type && <p className='text-green-600 text-xs uppercase'>{parsedData.type} Mode</p>}
+                      </div>
+                      
+                      <Button 
+                        onClick={handleAction} 
+                        className={`w-full ${isPickup ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        disabled={handoffMutation.isPending}
+                      >
+                          {handoffMutation.isPending ? (
+                              <>
+                                <Loader2 className='mr-2 w-4 h-4 animate-spin' />
+                                Processing Blockchain Proof...
+                              </>
+                          ) : (isPickup ? "Confirm Delivery" : "Confirm Handoff")}
+                      </Button>
+
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => { setScanResult(null); setParsedData(null); }}
+                        className='text-sm'
+                      >
+                          Scan Next
+                      </Button>
+                  </div>
+              </div>
+          )}
+
         </CardContent>
       </Card>
-
-      {/* ORDER PREVIEW CARD */}
-      {isLoadingOrder && (
-          <div className="flex justify-center p-8">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          </div>
-      )}
-
-      {order && scannedData && !isLoadingOrder && (
-          <Card className={`border-2 shadow-lg ${
-              scannedData.action === 'handoff' ? 'border-blue-500 bg-blue-50/50' : 'border-green-500 bg-green-50/50'
-          }`}>
-              <CardHeader className="pb-2">
-                  <div className="flex justify-between items-center">
-                      <Badge variant="outline" className="px-3 py-1 text-sm bg-white uppercase">
-                          {scannedData.action} Event
-                      </Badge>
-                      <span className="font-mono text-xs text-gray-500">{order._id}</span>
-                  </div>
-                  <CardTitle className="text-2xl pt-2">
-                      {scannedData.action === 'handoff' ? '📦 Vendor Drop-off' : '📬 Customer Pickup'}
-                  </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  {/* Order Info */}
-                  <div className="bg-white p-4 rounded-lg border">
-                      <div className="flex gap-4 mb-4">
-                          <img 
-                            src={order.items?.[0]?.product_id?.img?.[0] || order.items?.[0]?.img?.[0] || "/placeholder.svg"} 
-                            className="w-16 h-16 object-cover rounded bg-gray-100"
-                          />
-                          <div>
-                              <p className="font-bold">{order.items?.length} Items</p>
-                              <p className="text-sm text-gray-500">
-                                  Total: ₦{order.items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0).toLocaleString()}
-                              </p>
-                          </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                              <p className="text-gray-500 flex items-center gap-1"><User className="w-3 h-3" /> Customer</p>
-                              <p className="font-medium">{order.customer_id?.firstname} {order.customer_id?.lastname}</p>
-                          </div>
-                          <div>
-                              <p className="text-gray-500 flex items-center gap-1"><Truck className="w-3 h-3" /> Current Status</p>
-                              <p className="font-medium capitalize">{order.status.replace(/_/g, " ")}</p>
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Validation Logic UI */}
-                  {scannedData.action === 'handoff' && order.status !== 'processing' && order.status !== 'confirmed' && (
-                       <Alert variant="destructive">
-                           <AlertTitle>Warning</AlertTitle>
-                           <AlertDescription>Order status is {order.status}. Expected "processing". verify before accepting.</AlertDescription>
-                       </Alert>
-                  )}
-
-                  {scannedData.action === 'pickup' && order.status !== 'sent_to_post_office' && (
-                       <Alert variant="destructive">
-                           <AlertTitle>Warning</AlertTitle>
-                           <AlertDescription>Order status is {order.status}. Item might not be at Post Office yet.</AlertDescription>
-                       </Alert>
-                  )}
-
-                  <Button 
-                    className="w-full text-lg h-14" 
-                    variant={scannedData.action === 'handoff' ? "default" : "secondary"}
-                    onClick={handleConfirmAction}
-                    disabled={isProcessing}
-                  >
-                      {isProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Verifying on Cardano...
-                          </>
-                      ) : (
-                          <>
-                            <CheckCircle className="w-5 h-5 mr-2" />
-                            Confirm {scannedData.action === 'handoff' ? 'Drop-off' : 'Pickup'}
-                          </>
-                      )}
-                  </Button>
-                  <p className="text-center text-xs text-gray-400">
-                      Action will be permanently recorded on Cardano Blockchain
-                  </p>
-              </CardContent>
-          </Card>
-      )}
+      
+      <div className='bg-blue-50 mt-8 p-4 border border-blue-100 rounded-lg text-blue-900 text-sm'>
+          <p className='mb-1 font-bold'>How it works:</p>
+          <ul className='space-y-1 list-disc list-inside'>
+              <li>Scan the Vendor's package QR code.</li>
+              <li>Confirming generates a <strong>Proof-of-Handoff</strong> on Cardano.</li>
+              <li>This action officially transfers custody to the Post Office.</li>
+              <li>For student pickups, the <strong>Student</strong> must verify using their app.</li>
+          </ul>
+      </div>
     </div>
   );
 }

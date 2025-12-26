@@ -74,9 +74,10 @@ export default function VendorOrderDetailsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "delivered": return "bg-green-100 text-green-800";
-      case "shipped": 
-      case "sent_to_post_office": return "bg-purple-100 text-purple-800";
-      case "processing": return "bg-blue-100 text-blue-800";
+      case "ready_for_pickup": return "bg-orange-100 text-orange-800";
+      case "handed_to_post_office": return "bg-purple-100 text-purple-800";
+      case "order_confirmed": return "bg-blue-100 text-blue-800";
+      case "pending_payment": return "bg-gray-100 text-gray-800";
       case "cancelled": return "bg-red-100 text-red-800";
       default: return "bg-yellow-100 text-yellow-800";
     }
@@ -119,8 +120,7 @@ export default function VendorOrderDetailsPage() {
                         <SelectValue placeholder="Update Status" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
                         {order.delivery_option !== "school_post" && (
                           <>
                             <SelectItem value="shipped">Shipped</SelectItem>
@@ -130,9 +130,9 @@ export default function VendorOrderDetailsPage() {
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                 </Select>
-                {order.delivery_option === "school_post" && order.status === "processing" && (
-                    <span className="text-[10px] text-blue-600 font-medium">
-                        Scan at Post Office to Ship ↗
+                {order.delivery_option === "school_post" && order.status === "order_confirmed" && (
+                    <span className="text-[10px] text-blue-600 font-medium text-right">
+                        Take package to Post Office for handoff scan 📦
                     </span>
                 )}
             </div>
@@ -199,7 +199,7 @@ export default function VendorOrderDetailsPage() {
         <div className="space-y-6">
             {/* QR Code for Post Office Handoff */}
             {order.delivery_option === "school_post" && 
-             ["pending", "confirmed", "processing"].includes(order.status) && (
+             order.status === "order_confirmed" && (
               <Card className="border-blue-200 bg-blue-50">
                 <CardHeader>
                   <CardTitle className="text-blue-800 flex items-center gap-2 text-base">
@@ -209,7 +209,8 @@ export default function VendorOrderDetailsPage() {
                 </CardHeader>
                 <CardContent className="flex justify-center pb-6">
                   <OrderQR 
-                    orderId={order.order_id || order._id} 
+                    refId={order.refId} 
+                    qrCodeValue={order.vendor_qr_code || `${order.refId}-V`}
                     sellerId={order.vendor_id}
                     deliveryType="school_post"
                     action="handoff"
@@ -225,17 +226,77 @@ export default function VendorOrderDetailsPage() {
                         Customer Information
                      </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <div className="flex items-start gap-3">
-                        <div className="bg-primary/10 p-2 rounded-full">
-                            <User className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                            <p className="font-medium">{order.customer_id?.firstname} {order.customer_id?.lastname}</p>
-                            <p className="text-muted-foreground">{order.customer_id?.email}</p>
-                        </div>
-                    </div>
-                </CardContent>
+               <CardContent
+  className="
+    space-y-4
+    text-xs
+    sm:text-sm
+    md:text-base
+  "
+>
+  <div
+    className="
+      flex
+      items-start
+      gap-3
+      sm:gap-4
+      md:gap-5
+    "
+  >
+    {/* Icon */}
+    <div
+      className="
+        bg-primary/10
+        p-2
+        sm:p-3
+        rounded-full
+        shrink-0
+      "
+    >
+      <User
+        className="
+          w-4 h-4
+          sm:w-5 sm:h-5
+          text-primary
+        "
+      />
+    </div>
+
+    {/* Information */}
+    <div
+      className="
+        grid
+        grid-cols-1
+        gap-2
+        sm:gap-2.5
+        md:grid-cols-2
+        md:gap-x-6
+        md:gap-y-2
+      "
+    >
+      {/* Name */}
+      <p className="font-medium break-words col-span-full">
+        {order.customer_id?.firstname} {order.customer_id?.lastname}
+      </p>
+
+      {/* Email */}
+      <p className="text-muted-foreground break-words">
+        {order.customer_id?.email}
+      </p>
+
+      {/* Phone */}
+      <p className="text-muted-foreground break-words">
+        {order.customer_id?.phone}
+      </p>
+
+      {/* Location */}
+      <p className="text-muted-foreground break-words col-span-full">
+        {order.customer_id?.delivery_location}
+      </p>
+    </div>
+  </div>
+</CardContent>
+
             </Card>
 
             <Card>

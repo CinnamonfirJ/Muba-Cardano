@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/authService";
 import { Settings, User, Lock, Bell, Shield, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -47,15 +48,18 @@ export default function SettingsPage() {
     setSuccess(null);
 
     try {
-      // TODO: Call backend API when available
-      // For now, update local state
-      updateUser({
-        ...user!,
-        ...profileData,
+      // Call backend API
+      const updatedUser = await authService.updateProfile({
+        ...profileData
       });
+      
+      // Update local context
+      updateUser(updatedUser);
+      
       setSuccess("Profile updated successfully");
     } catch (err: any) {
-      setError(err.message || "Failed to update profile");
+      console.error(err);
+      setError(err.response?.data?.message || err.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +84,12 @@ export default function SettingsPage() {
     }
 
     try {
-      // TODO: Call backend API when available
+      // Call backend API
+      await authService.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
+
       setSuccess("Password changed successfully");
       setPasswordData({
         currentPassword: "",
@@ -88,7 +97,8 @@ export default function SettingsPage() {
         confirmPassword: "",
       });
     } catch (err: any) {
-      setError(err.message || "Failed to change password");
+      console.error(err);
+      setError(err.response?.data?.message || err.message || "Failed to change password");
     } finally {
       setIsLoading(false);
     }

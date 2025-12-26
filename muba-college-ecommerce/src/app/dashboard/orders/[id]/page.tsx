@@ -50,23 +50,34 @@ export default function OrderDetailsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "delivered": return "bg-green-100 text-green-800";
-      case "shipped": return "bg-purple-100 text-purple-800";
-      case "processing": return "bg-blue-100 text-blue-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      default: return "bg-yellow-100 text-yellow-800";
+      case "delivered": return "bg-green-100 text-green-800 border-green-200";
+      case "ready_for_pickup": return "bg-orange-100 text-orange-800 border-orange-200";
+      case "handed_to_post_office": return "bg-purple-100 text-purple-800 border-purple-200";
+      case "paid":
+      case "order_confirmed": return "bg-blue-100 text-blue-800 border-blue-200";
+      case "pending_payment": return "bg-gray-100 text-gray-800 border-gray-200";
+      case "cancelled": return "bg-red-100 text-red-800 border-red-200";
+      default: return "bg-yellow-100 text-yellow-800 border-yellow-200";
     }
   };
 
-  const calculateTotal = () => {
-    const itemsTotal = order.items.reduce((sum: number, item: any) => {
-        const price = item.product_id?.price ?? item.price ?? 0;
-        return sum + (price * item.quantity);
-    }, 0);
-    return itemsTotal + (order.delivery_fee || 0);
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending_payment": return "Pending Payment";
+      case "paid": return "Paid";
+      case "order_confirmed": return "Order Confirmed";
+      case "handed_to_post_office": return "Handed to Post Office";
+      case "ready_for_pickup": return "Ready for Pickup";
+      case "delivered": return "Delivered";
+      case "cancelled": return "Cancelled";
+      default: return status?.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "Pending";
+    }
   };
-
-  const totalAmount = calculateTotal();
+  
+  const totalAmount = order.total_amount || order.total || 0;
+  const deliveryFee = order.delivery_fee || 0;
+  const serviceFee = order.service_fee || 0;
+  const subtotal = order.subtotal || (totalAmount - deliveryFee - serviceFee);
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -104,27 +115,16 @@ export default function OrderDetailsPage() {
                                     <div>
                                         <h4 className="font-medium">{item.product_id?.title || item.name || "Product"}</h4>
                                         <p className="text-muted-foreground text-sm">Qty: {item.quantity}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                                                {getStatusLabel(item.status || order.status)}
+                                            </Badge>
+                                            {(item.refId || order.refId) && (
+                                                <p className="text-[10px] items-center font-mono text-blue-600">Ref: {item.refId || order.refId}</p>
+                                            )}
+                                        </div>
                                     </div>
                                     <p className="font-semibold">₦{((item.product_id?.price ?? item.price ?? 0) * item.quantity).toLocaleString()}</p>
-                                </div>
-                                <div className="mt-2 flex flex-wrap gap-2 items-center">
-                                     <Badge className={getStatusColor(item.status)} variant="secondary">
-                                        {item.status}
-                                     </Badge>
-                                     {/* QR for Pickup */}
-                                     {item.status === "sent_to_post_office" && order.delivery_option === "school_post" && (
-                                       <div className="mt-2">
-                                         <p className="text-xs font-bold text-green-600 mb-2">Ready for Pickup!</p>
-                                         <OrderQR 
-                                           orderId={order._id} 
-                                           sellerId={item.vendor_id}
-                                           deliveryType="school_post"
-                                           action="pickup"
-                                           size={120}
-                                           className="border-green-200 bg-green-50"
-                                         />
-                                       </div>
-                                     )}
                                 </div>
                              </div>
                         </div>
@@ -142,13 +142,17 @@ export default function OrderDetailsPage() {
                 <CardContent className="space-y-2">
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Subtotal</span>
-                        <span>₦{((totalAmount - (order.delivery_fee || 0))).toLocaleString()}</span>
+                        <span>₦{subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Delivery Fee</span>
-                        <span>₦{(order.delivery_fee || 0).toLocaleString()}</span>
+                        <span>₦{deliveryFee.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between border-t pt-2 font-bold text-lg">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Service Fee</span>
+                        <span>₦{serviceFee.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t pt-2 font-bold text-lg">
                         <span>Total</span>
                         <span>₦{totalAmount.toLocaleString()}</span>
                     </div>
@@ -156,33 +160,97 @@ export default function OrderDetailsPage() {
             </Card>
         </div>
 
+
         <div className="space-y-6">
+           {/* QR Code Section - Visible ONLY after handoff to PO */}
+           {(order.refId || order.client_qr_code) && 
+            (order.delivery_option === "school_post" || order.is_pickup_order) && 
+            (order.status === "handed_to_post_office" || order.status === "ready_for_pickup") ? (
+             <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader className="pb-2">
+                     <CardTitle className="flex items-center gap-2 text-base text-blue-700">
+                        <Truck className="w-4 h-4" />
+                        {order.status === "ready_for_pickup" ? "Ready for Pickup!" : "Pickup QR Code"}
+                     </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="text-center w-full">
+                        <OrderQR 
+                            refId={order.refId}
+                            qrCodeValue={order.client_qr_code || `${order.refId}-C`}
+                            sellerId={typeof order.vendor_id === 'string' ? order.vendor_id : order.vendor_id?._id}
+                            deliveryType="school_post"
+                            action="pickup"
+                            size={180}
+                            className="bg-white border-blue-100 mx-auto"
+                        />
+                        <p className="text-xs font-medium text-blue-600 mt-3">
+                            {order.status === "ready_for_pickup" 
+                                ? "Present this QR code at the Campus Post Office to receive your package."
+                                : order.status === "handed_to_post_office"
+                                ? "Your package is currently at the Post Office. You will receive a notification when it's ready for pickup."
+                                : "Your order is confirmed. You will need this QR code once the package is at the Post Office."}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+           ) : (
             <Card>
                 <CardHeader>
                      <CardTitle className="flex items-center gap-2 text-base">
                         <Truck className="w-4 h-4" />
-                        Delivery Info
+                        Order Status
+                     </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                         <Badge className={getStatusColor(order.status)} variant="secondary">
+                            {getStatusLabel(order.status)}
+                         </Badge>
+                    </div>
+                </CardContent>
+            </Card>
+           )}
+            <Card>
+                <CardHeader>
+                     <CardTitle className="flex items-center gap-2 text-base">
+                        <MapPin className="w-4 h-4" />
+                        Delivery & Customer Info
                      </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                    <div>
-                        <p className="text-muted-foreground">Method</p>
-                        <p className="font-medium capitalize">{order.delivery_option?.replace("_", " ") || "Standard"}</p>
+                    <div className="gap-4 grid grid-cols-2">
+                        <div>
+                            <p className="text-muted-foreground">Method</p>
+                            <p className="font-medium capitalize">{order.delivery_option?.replace(/_/g, " ") || "Standard"}</p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Date Placed</p>
+                            <p className="font-medium">{format(new Date(order.createdAt), "MMM d, yyyy")}</p>
+                        </div>
                     </div>
-                    <div>
-                         <p className="text-muted-foreground">Date Placed</p>
-                         <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span>{format(new Date(order.createdAt), "PPP p")}</span>
+
+                    <div className="border-t pt-4 space-y-3">
+                         <div>
+                            <p className="text-muted-foreground">Recipient</p>
+                            <p className="font-medium">
+                                {order.user_id?.firstname || order.customer_id?.firstname} {order.user_id?.lastname || ""}
+                            </p>
                          </div>
-                    </div>
-                    <div className="border-t pt-2">
-                         <p className="mb-1 font-medium">Customer Details</p>
-                         <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="w-4 h-4" />
-                            <span>{order.user_id?.firstname || order.customer_id?.firstname} {order.user_id?.lastname || ""}</span>
-                         </div>
-                         <p className="mt-1 ml-6 text-muted-foreground text-xs">{order.user_id?.email || order.customer_id?.email}</p>
+                         {(order.shipping_info?.phone || order.user_id?.phone) && (
+                            <div>
+                                <p className="text-muted-foreground">Phone</p>
+                                <p className="font-medium">{order.shipping_info?.phone || order.user_id?.phone}</p>
+                            </div>
+                         )}
+                         {(order.shipping_info?.address || order.user_id?.delivery_location) && (
+                            <div>
+                                <p className="text-muted-foreground">Delivery Address</p>
+                                <p className="font-medium text-xs leading-relaxed">
+                                    {order.shipping_info?.address || order.user_id?.delivery_location}
+                                </p>
+                            </div>
+                         )}
                     </div>
                 </CardContent>
             </Card>

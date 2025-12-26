@@ -2,12 +2,17 @@ import api from "./api";
 
 export interface VendorOrder {
   _id: string;
+  refId?: string;
   order_id: string;
   vendor_id: string;
   customer_id: {
     _id: string;
     firstname: string;
+    lastname?: string;
     email: string;
+    phone?: string;
+    delivery_location: string;
+    matric_number?: string;
   };
   items: Array<{
     product_id: {
@@ -28,15 +33,24 @@ export interface VendorOrder {
     name: string;
     phone: string;
   };
+  vendor_qr_code?: string;
+  client_qr_code?: string;
+  is_pickup_order?: boolean;
   status:
+    | "pending_payment"
+    | "order_confirmed"
+    | "processing"
+    | "picked_up_by_post_office"
+    | "in_transit"
+    | "ready_for_pickup"
+    | "delivered"
+    | "cancelled"
+    // Legacy statuses for backward compatibility
     | "pending"
     | "confirmed"
-    | "processing"
     | "sent_to_post_office"
     | "out_for_delivery"
-    | "assigned_to_rider"
-    | "delivered"
-    | "cancelled";
+    | "assigned_to_rider";
   createdAt: string;
   updatedAt: string;
 }
@@ -67,4 +81,17 @@ export const updateVendorOrder = async (
     { params }
   );
   return response.data.data;
+};
+
+export const markAsReadyForPickup = async (orderId: string) => {
+  const response = await api.post<{
+    success: boolean;
+    message: string;
+    data: {
+      refId: string;
+      status: string;
+      client_qr_code: string;
+    };
+  }>(`/api/v1/delivery/mark-ready/${orderId}`);
+  return response.data;
 };

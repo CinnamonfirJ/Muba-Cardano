@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import toast from "react-hot-toast";
+import VendorBadges from "@/components/VendorBadges";
 
 export default function StorePage() {
   const { id } = useParams() as { id: string };
@@ -151,6 +152,14 @@ export default function StorePage() {
                       {store.products.length || 0} Products
                     </Badge>
                   </div>
+                  {/* Vendor Badges */}
+                  <VendorBadges 
+                    successfulDeliveries={store.owner?.successful_deliveries || 0}
+                    rating={store.rating || 0}
+                    isPostOffice={store.owner?.postOfficeStatus === "accepted"}
+                    className="mt-3"
+                    size="md"
+                  />
                 </div>
 
                 <div className='flex gap-3'>
@@ -279,6 +288,18 @@ export default function StorePage() {
                     <p className='text-gray-500'>Reviews</p>
                   </div>
                 </div>
+                
+                 <div className='flex items-center gap-2'>
+                   <div className='bg-indigo-50 p-2 rounded-lg text-indigo-600'>
+                     <Shield className='w-5 h-5' />
+                   </div>
+                   <div>
+                     <p className='font-semibold text-gray-900'>
+                       {store.owner?.successful_deliveries || 0}
+                     </p>
+                     <p className='text-gray-500'>Verified Deliveries</p>
+                   </div>
+                 </div>
               </div>
 
               <p className='mt-6 text-gray-600 leading-relaxed'>

@@ -63,6 +63,15 @@ export const cartService = {
     return response.data;
   },
 
+  // Update product quantity (Direct Set)
+  async updateQuantity(cartItemId: string, quantity: number) {
+    const response = await api.patch(`/api/v1/cart/update-quantity`, {
+      _id: cartItemId,
+      quantity,
+    });
+    return response.data;
+  },
+
   // Get user's cart
   async getCart(userId: string) {
     const response = await api.get(`/api/v1/cart/${userId}`);

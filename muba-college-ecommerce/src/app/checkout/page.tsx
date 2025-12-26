@@ -50,29 +50,37 @@ const CheckoutPage = () => {
     specialInstructions: "",
   });
 
-  // Sync cart and initialize user info on mount
+  // Initialize user info on mount (removed syncCart to prevent duplicates)
   useEffect(() => {
-    syncCart();
-
     if (user) {
       setShippingInfo((prev) => ({
         ...prev,
         fullName: prev.fullName || `${user.firstname} ${user.lastname}`,
-        phone: prev.phone || "", // user model doesn't seem to have phone?
-        email: prev.email || user.email || "", // Changed to user.email
+        phone: prev.phone || user.phone || "",
+        email: prev.email || user.email || "",
       }));
     }
   }, [user]);
 
-  const deliveryFee = cartState.total > 10000 ? 0 : 500;
+  const getDeliveryFee = () => {
+    if (shippingInfo.deliveryMethod === "school_post") {
+      return cartState.total > 10000 ? 0 : 500;
+    }
+    if (shippingInfo.deliveryMethod === "rider") {
+      return 2000;
+    }
+    return 0; // peer_to_peer or self
+  };
+
+  const deliveryFee = getDeliveryFee();
   const serviceFee = Math.round(cartState.total * 0.02);
   const finalTotal = cartState.total + deliveryFee + serviceFee;
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity === 0) {
-      removeItem(productId);
+      await removeItem(productId);
     } else {
-      updateQuantity(productId, newQuantity);
+      await updateQuantity(productId, newQuantity);
     }
   };
 
@@ -98,27 +106,16 @@ const CheckoutPage = () => {
     setIsProcessing(true);
 
     try {
-      // 🧩 Build metadata — send all important info to Paystack
-      // const metadata = {
-      //   cartItems: cartState.items.map((item) => ({
-      //     id: item._id,
-      //     name: item.product.title,
-      //     price: item.product.price,
-      //     quantity: item.quantity,
-      //   })),
-      //   user_id: user?._id,
-      //   shippingInfo,
-      //   total: finalTotal,
-      // };
-
       // 🪙 Initialize payment
       const paymentData = {
         email: user?.email || "",
         amount: finalTotal,
         metadata: {
           userId: user?._id,
-          deliveryMethod: shippingInfo.deliveryMethod, // Pass selected delivery method
-          shippingInfo, // Pass full shipping info for reference
+          deliveryMethod: shippingInfo.deliveryMethod,
+          shippingInfo,
+          delivery_fee: deliveryFee, // Pass explicit fees
+          service_fee: serviceFee,  // Pass explicit fees
         },
       };
 
@@ -131,7 +128,7 @@ const CheckoutPage = () => {
         throw new Error("No authorization URL received from payment gateway");
       }
 
-      // 🧾 Optionally store temporary order details before redirecting
+      // 🧾 Store reference for feedback
       localStorage.setItem(
         "pendingOrder",
         JSON.stringify({

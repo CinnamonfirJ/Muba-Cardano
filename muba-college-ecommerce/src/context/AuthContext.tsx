@@ -6,6 +6,9 @@ import {
   updateApiToken,
   registerAuthContext,
 } from "../utils/authApiConnection";
+
+// Export the User type for use in other components
+export type { User };
 import toast from "react-hot-toast";
 
 interface AuthContextType {

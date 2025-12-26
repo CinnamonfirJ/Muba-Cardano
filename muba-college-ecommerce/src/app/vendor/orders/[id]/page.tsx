@@ -21,11 +21,13 @@ import {
 import { Input } from "../../../../components/ui/input";
 import { Label } from "../../../../components/ui/label";
 import { Separator } from "../../../../components/ui/separator";
-import { ArrowLeft, Truck, Package, User } from "lucide-react";
+import { ArrowLeft, Truck, Package, User, Phone, MapPin, Hash } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
+import { getStatusLabel, formatDeliveryFee } from "../../../../utils/orderStatus";
+import OrderQR from "../../../../components/OrderQR";
 
 export default function VendorOrderDetailsPage() {
   const { id } = useParams();
@@ -87,7 +89,7 @@ export default function VendorOrderDetailsPage() {
           </Button>
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">
-          Order #{order._id.substring(0, 8)}
+          Order <span className="font-mono bg-slate-100 px-2 py-1 rounded">{order.refId || order._id.substring(0, 8).toUpperCase()}</span>
         </h1>
         <div className="ml-auto">
           <Button
@@ -156,14 +158,38 @@ export default function VendorOrderDetailsPage() {
                 Customer Info
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-muted-foreground">Name:</span>
-                <span className="font-medium">
-                  {order.customer_id?.firstname} {order.customer_id?._id}
-                </span>
-                <span className="text-muted-foreground">Email:</span>
-                <span>{order.customer_id?.email}</span>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {order.customer_id?.firstname} {order.customer_id?.lastname || ''}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{order.customer_id?.email}</p>
+                  </div>
+                </div>
+                
+                {order.customer_id?.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{order.customer_id.phone}</span>
+                  </div>
+                )}
+                
+                {order.customer_id?.delivery_location && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <span className="text-sm">{order.customer_id.delivery_location}</span>
+                  </div>
+                )}
+                
+                {order.customer_id?.matric_number && (
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-mono text-blue-600">{order.customer_id.matric_number}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -171,6 +197,17 @@ export default function VendorOrderDetailsPage() {
 
         {/* Management */}
         <div className="space-y-6">
+           {/* QR Code for Handoff */}
+           {status === "order_confirmed" && (order.delivery_option === "school_post" || order.is_pickup_order) && (
+             <OrderQR 
+               refId={order.refId}
+               qrCodeValue={order.vendor_qr_code || `${order.refId}-V`}
+               sellerId={order.vendor_id}
+               action="handoff"
+               className="mb-4 border-blue-200 bg-blue-50 w-full"
+             />
+           )}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -189,22 +226,12 @@ export default function VendorOrderDetailsPage() {
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="sent_to_post_office">
-                      Sent to Post Office
-                    </SelectItem>
-                    <SelectItem value="out_for_delivery">
-                      Out for Delivery
-                    </SelectItem>
-                    <SelectItem value="assigned_to_rider">
-                      Assigned to Rider
-                    </SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  👆 "Handed to Post Office", "Ready for Pickup", and "Delivered" statuses are set automatically when the Post Office scans the package.
+                </p>
               </div>
 
               <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useVendorOrders } from "../../../hooks/useVendorOrders";
+import { useVendorOrders, useUpdateVendorOrder } from "../../../hooks/useVendorOrders";
 import { useMyStores } from "../../../hooks/useStores";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
+import { getStatusLabel, getStatusBadgeClass, formatDeliveryFee } from "../../../utils/orderStatus";
 
 export default function VendorOrdersPage() {
   const { user } = useAuth();
@@ -50,6 +51,10 @@ export default function VendorOrdersPage() {
 
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const updateMutation = useUpdateVendorOrder();
+
+  // Removed handleMarkProcessing as 'processing' is no longer in the canonical flow.
+  // Instead, orders move from 'order_confirmed' to 'handed_to_post_office' via QR scan.
 
   if (isLoadingStores) return <div className="p-8 text-center">Loading your stores...</div>;
   if (!stores || stores.length === 0) return (
@@ -70,6 +75,7 @@ export default function VendorOrdersPage() {
       filterStatus === "all" || order.status === filterStatus;
     const matchesSearch =
       order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.refId && order.refId.toLowerCase().includes(searchTerm.toLowerCase())) ||
       order.customer_id.firstname.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
@@ -99,12 +105,9 @@ export default function VendorOrdersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="sent_to_post_office">Sent to Post Office</SelectItem>
-            <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
-            <SelectItem value="assigned_to_rider">Assigned to Rider</SelectItem>
+            <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
+            <SelectItem value="handed_to_post_office">Handed to Post Office</SelectItem>
+            <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
@@ -131,52 +134,81 @@ export default function VendorOrdersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
+              <TableHead>Order Ref</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Delivery</TableHead>
+              <TableHead>Del. Fee</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Total Items</TableHead>
+              <TableHead className="text-right">Items (Qty)</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredOrders && filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
+              filteredOrders.map((order) => {
+                const totalQty = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+                const customerName = `${order.customer_id?.firstname || ''} ${order.customer_id?.lastname || ''}`.trim() || "Unknown";
+                
+                return (
                 <TableRow key={order._id}>
-                  <TableCell className="font-medium">
-                    {order._id.substring(0, 8)}...
+                  <TableCell className="font-medium font-mono">
+                    {order.refId || order._id.substring(0, 8).toUpperCase()}
                   </TableCell>
                   <TableCell>
-                    {order.customer_id?.firstname || "Unknown"}
+                    <div className="flex flex-col">
+                      <span className="font-medium">{customerName}</span>
+                      <span className="text-xs text-gray-500">{order.customer_id?.email}</span>
+                      {order.customer_id?.matric_number && (
+                        <span className="text-xs text-blue-600">{order.customer_id.matric_number}</span>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-sm">
+                    {order.customer_id?.phone || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {order.customer_id?.delivery_location || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm">
                     {format(new Date(order.createdAt), "MMM d, yyyy")}
                   </TableCell>
-                  <TableCell className="capitalize">
+                  <TableCell className="capitalize text-sm">
                     {order.delivery_option?.replace(/_/g, " ")}
                   </TableCell>
+                  <TableCell className="text-sm">
+                    {formatDeliveryFee(order.delivery_fee || 0)}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={getOrderStatusVariant(order.status)}>
-                      {order.status.replace(/_/g, " ")}
-                    </Badge>
+                    <span className={getStatusBadgeClass(order.status)}>
+                      {getStatusLabel(order.status)}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {order.items.length}
+                    <div className="flex flex-col items-end">
+                      <span>{order.items.length} item{order.items.length !== 1 ? 's' : ''}</span>
+                      <span className="text-xs text-gray-500">Qty: {totalQty}</span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/vendor/orders/${order._id}`}>
-                      <Button variant="ghost" size="sm">
-                        View Details
-                      </Button>
-                    </Link>
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/vendor/orders/${order._id}`}>
+                        <Button variant="ghost" size="sm">
+                          View Details
+                        </Button>
+                      </Link>
+                      {/* Actions are primarily via QR scans for the delivery lifecycle */}
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
+              );
+              })
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={10}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No orders found.
@@ -190,20 +222,4 @@ export default function VendorOrdersPage() {
   );
 }
 
-function getOrderStatusVariant(status: string) {
-  switch (status) {
-    case "confirmed":
-    case "processing":
-      return "default"; // blue-ish typically
-    case "sent_to_post_office":
-    case "out_for_delivery":
-    case "assigned_to_rider":
-      return "secondary"; // yellow/orange-ish
-    case "delivered":
-      return "outline"; // green-ish usually but outline is neutral. Shadcn badge variants are limited by default
-    case "cancelled":
-      return "destructive";
-    default:
-      return "secondary";
-  }
-}
+

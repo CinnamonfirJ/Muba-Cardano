@@ -4,11 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingBag, Star, Heart, Shield } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
+import { ProfileCompletionBanner } from "@/components/ProfileCompletionBanner";
+
 const DashboardOverview = () => {
   const { user } = useAuth();
 
   return (
     <div className="space-y-6">
+      <ProfileCompletionBanner user={user} />
+      
       {/* Stats Cards */}
       <div className="w-full overflow-x-auto">
         <div

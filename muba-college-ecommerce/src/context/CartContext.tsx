@@ -5,6 +5,7 @@ import { createContext, useContext, useReducer, useEffect } from "react";
 import type { Product } from "../services/productService";
 import { cartService } from "../services/cartService";
 import { useAuth } from "./AuthContext";
+import toast from "react-hot-toast";
 
 interface CartItem {
   product: Product;
@@ -447,14 +448,43 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     // Sync to backend if user is logged in
     if (isAuthenticated && user) {
       try {
-        const response = await cartService.addToCart(
+        const response: any = await cartService.addToCart(
           product,
           user._id,
           quantity,
           variants
         );
-        // Update the item with backend ID if needed
-        console.log("Added to backend cart:", response);
+        
+        // Update the item with backend ID
+        // INSTEAD of partial update, we fetch the whole cart to be safe and robust.
+        // This guarantees we have the _id for the new item.
+        try {
+             const backendResponse = await cartService.getCart(user._id);
+             const backendCart = backendResponse.data || backendResponse.cart || [];
+             
+             const backendCartItems: CartItem[] = backendCart.map((item: any) => ({
+                product: {
+                  _id: item.product_id,
+                  name: item.name,
+                  title: item.name,
+                  img: item.img,
+                  images: [item.img],
+                  description: item.description,
+                  category: item.category,
+                  price: item.price,
+                  store: item.store,
+                },
+                quantity: item.quantity,
+                selectedVariants: item.variants || {},
+                addedAt: item.createdAt || new Date().toISOString(),
+                _id: item._id,
+              }));
+
+              dispatch({ type: "SYNC_SUCCESS", payload: backendCartItems });
+              saveToLocalStorage(backendCartItems);
+        } catch (syncError) {
+            console.error("Failed to sync cart after add:", syncError);
+        }
       } catch (error) {
         console.error("Error adding to backend cart:", error);
         // Still keep in localStorage even if backend fails
@@ -485,30 +515,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateQuantity = async (productId: string, quantity: number) => {
     const currentItem = state.items.find((i) => i.product._id === productId);
-    const currentQuantity = currentItem?.quantity || 0;
+    const previousQuantity = currentItem?.quantity || 0;
 
-    // Update local state immediately
+    // 1. OPTIMISTIC UPDATE: Update local state immediately
     dispatch({ type: "UPDATE_QUANTITY", payload: { id: productId, quantity } });
 
-    // Sync to backend if user is logged in
-    if (isAuthenticated && user && currentItem?._id) {
-      try {
-        const difference = quantity - currentQuantity;
+    // If not logged in or missing backend ID, we stop here (localStorage handled by useEffect)
+    if (!isAuthenticated || !user || !currentItem?._id) {
+      return;
+    }
 
-        if (difference > 0) {
-          // Increase quantity multiple times if needed
-          for (let i = 0; i < difference; i++) {
-            await cartService.increaseQuantity(currentItem._id);
-          }
-        } else if (difference < 0) {
-          // Decrease quantity multiple times if needed
-          for (let i = 0; i < Math.abs(difference); i++) {
-            await cartService.decreaseQuantity(currentItem._id);
-          }
-        }
-      } catch (error) {
-        console.error("Error updating quantity:", error);
-      }
+    // 2. BACKGROUND SYNC: Call API once
+    try {
+      // Use the new direct set endpoint
+      await cartService.updateQuantity(currentItem._id, quantity);
+      
+      // Optionally sync full cart in background to ensure total consistency (optional for speed)
+      // But we already updated local state, so we are good for now.
+    } catch (error) {
+      console.error("Error updating quantity sync:", error);
+      // ROLLBACK: Revert to previous quantity on failure
+      dispatch({ type: "UPDATE_QUANTITY", payload: { id: productId, quantity: previousQuantity } });
+      toast.error("Failed to sync cart quantity. Reverting changes.");
     }
   };
 

@@ -22,15 +22,19 @@ export interface User {
   middlename?: string;
   lastname: string;
   email: string;
-  role: "user" | "vendor" | "admin";
+  role: "user" | "vendor" | "admin" | "post_office" | "post_office_member";
   matric_number?: string;
   phone?: string;
+  delivery_location?: string;
+  bio?: string;
   isVerified?: boolean;
   avatar?: string;
   profile_img?: string;
   rating?: number;
   stores?: any[];
   vendorStatus?: "none" | "pending" | "accepted" | "rejected";
+  postOfficeStatus?: "none" | "pending" | "accepted" | "rejected";
+  postOfficeName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -138,6 +142,47 @@ export const authService = {
   async requestOTP(email: string) {
     const response = await api.post("/api/v1/auth/otp", { email });
     return response.data;
+  },
+
+  async updateProfile(userData: Partial<User>) {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?._id) {
+      throw new Error("No user ID available");
+    }
+
+    try {
+        const response = await api.patch(`/api/v1/users/${currentUser._id}`, userData);
+        
+        // Update stored user data if successful
+        if (response.data && response.data.data) {
+             const updatedUser = response.data.data;
+             localStorage.setItem("user_data", JSON.stringify(updatedUser));
+             return updatedUser;
+        }
+        return response.data;
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        throw error;
+    }
+  },
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?._id) {
+      throw new Error("No user ID available");
+    }
+
+    try {
+      const response = await api.post("/api/v1/auth/change-password", {
+        userId: currentUser._id,
+        currentPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error changing password:", error);
+      throw error;
+    }
   },
 
   async resetPassword(email: string, otp: string, newPassword: string) {

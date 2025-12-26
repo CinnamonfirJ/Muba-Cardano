@@ -48,14 +48,17 @@ const OrdersPage = () => {
     switch (status) {
       case "delivered":
         return "bg-green-100 text-green-800";
-      case "shipped":
+      case "handed_to_post_office":
+        return "bg-purple-100 text-purple-800";
+      case "ready_for_pickup":
+        return "bg-orange-100 text-orange-800";
+      case "paid":
+      case "order_confirmed":
         return "bg-blue-100 text-blue-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
+      case "pending_payment":
+        return "bg-gray-100 text-gray-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
-      case "processing":
-        return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -65,14 +68,14 @@ const OrdersPage = () => {
     switch (status) {
       case "delivered":
         return <CheckCircle className='w-4 h-4' />;
-      case "shipped":
+      case "ready_for_pickup":
+      case "handed_to_post_office":
         return <Truck className='w-4 h-4' />;
-      case "pending":
+      case "order_confirmed":
+      case "paid":
         return <Clock className='w-4 h-4' />;
       case "cancelled":
         return <XCircle className='w-4 h-4' />;
-      case "processing":
-        return <Package className='w-4 h-4' />;
       default:
         return <Package className='w-4 h-4' />;
     }
@@ -104,14 +107,17 @@ const OrdersPage = () => {
 
   const ordersByStatus = {
     all: filteredOrders,
-    pending: filteredOrders.filter((order) =>
-      order.items.some((item) => item.status === "pending")
+    pending_payment: filteredOrders.filter((order) =>
+      order.items.some((item) => item.status === "pending_payment")
     ),
-    processing: filteredOrders.filter((order) =>
-      order.items.some((item) => item.status === "processing")
+    order_confirmed: filteredOrders.filter((order) =>
+      order.items.some((item) => item.status === "order_confirmed")
     ),
-    shipped: filteredOrders.filter((order) =>
-      order.items.some((item) => item.status === "shipped")
+    handed_to_post_office: filteredOrders.filter((order) =>
+      order.items.some((item) => item.status === "handed_to_post_office")
+    ),
+    ready_for_pickup: filteredOrders.filter((order) =>
+      order.items.some((item) => item.status === "ready_for_pickup")
     ),
     delivered: filteredOrders.filter((order) =>
       order.items.some((item) => item.status === "delivered")
@@ -156,8 +162,7 @@ const OrdersPage = () => {
                 <div className='flex items-center gap-1'>
                   {getStatusIcon(safeStatus)}
                   <span className='text-xs sm:text-sm'>
-                    {safeStatus.charAt(0).toUpperCase() +
-                      safeStatus.slice(1)}
+                    {safeStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </span>
                 </div>
               </Badge>
@@ -346,9 +351,10 @@ const OrdersPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='all'>All Orders</SelectItem>
-                <SelectItem value='pending'>Pending</SelectItem>
-                <SelectItem value='processing'>Processing</SelectItem>
-                <SelectItem value='shipped'>Shipped</SelectItem>
+                <SelectItem value='pending_payment'>Pending Payment</SelectItem>
+                <SelectItem value='order_confirmed'>Confirmed</SelectItem>
+                <SelectItem value='handed_to_post_office'>At Post Office</SelectItem>
+                <SelectItem value='ready_for_pickup'>Ready for Pickup</SelectItem>
                 <SelectItem value='delivered'>Delivered</SelectItem>
                 <SelectItem value='cancelled'>Cancelled</SelectItem>
               </SelectContent>
@@ -357,42 +363,27 @@ const OrdersPage = () => {
 
           {/* Orders Tabs */}
           <Tabs defaultValue='all' className='space-y-4'>
-            <TabsList className='gap-1 grid grid-cols-3 sm:grid-cols-6 w-full'>
-              <TabsTrigger value='all' className='text-xs sm:text-sm'>
-                All
-                <span className='hidden sm:inline ml-1'>
-                  ({ordersByStatus.all.length})
-                </span>
+            <TabsList className='gap-1 grid grid-cols-4 lg:grid-cols-7 w-full h-auto'>
+              <TabsTrigger value='all' className='text-[10px] sm:text-xs'>
+                All ({ordersByStatus.all.length})
               </TabsTrigger>
-              <TabsTrigger value='pending' className='text-xs sm:text-sm'>
-                Pending
-                <span className='hidden sm:inline ml-1'>
-                  ({ordersByStatus.pending.length})
-                </span>
+              <TabsTrigger value='pending_payment' className='text-[10px] sm:text-xs'>
+                Pending ({ordersByStatus.pending_payment.length})
               </TabsTrigger>
-              <TabsTrigger value='processing' className='text-xs sm:text-sm'>
-                Processing
-                <span className='hidden sm:inline ml-1'>
-                  ({ordersByStatus.processing.length})
-                </span>
+              <TabsTrigger value='order_confirmed' className='text-[10px] sm:text-xs'>
+                Confirmed ({ordersByStatus.order_confirmed.length})
               </TabsTrigger>
-              <TabsTrigger value='shipped' className='text-xs sm:text-sm'>
-                Shipped
-                <span className='hidden sm:inline ml-1'>
-                  ({ordersByStatus.shipped.length})
-                </span>
+              <TabsTrigger value='handed_to_post_office' className='text-[10px] sm:text-xs'>
+                Handoff ({ordersByStatus.handed_to_post_office.length})
               </TabsTrigger>
-              <TabsTrigger value='delivered' className='text-xs sm:text-sm'>
-                Delivered
-                <span className='hidden sm:inline ml-1'>
-                  ({ordersByStatus.delivered.length})
-                </span>
+              <TabsTrigger value='ready_for_pickup' className='text-[10px] sm:text-xs'>
+                Ready ({ordersByStatus.ready_for_pickup.length})
               </TabsTrigger>
-              <TabsTrigger value='cancelled' className='text-xs sm:text-sm'>
-                Cancelled
-                <span className='hidden sm:inline ml-1'>
-                  ({ordersByStatus.cancelled.length})
-                </span>
+              <TabsTrigger value='delivered' className='text-[10px] sm:text-xs'>
+                Finished ({ordersByStatus.delivered.length})
+              </TabsTrigger>
+              <TabsTrigger value='cancelled' className='text-[10px] sm:text-xs'>
+                Cancelled ({ordersByStatus.cancelled.length})
               </TabsTrigger>
             </TabsList>
 

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, User, Mail, Phone, MapPin } from "lucide-react";
+import { authService } from "@/services/authService";
 import toast from "react-hot-toast";
 
 
@@ -28,10 +29,10 @@ const ProfilePage = () => {
     firstname: user?.firstname || "",
     lastname: user?.lastname || "",
     email: user?.email || "",
-    phone: "",
+    phone: user?.phone || "",
     matric_number: user?.matric_number || "",
     bio: "",
-    address: "",
+    delivery_location: user?.delivery_location || "",
   });
 
   const handleInputChange = (
@@ -48,19 +49,24 @@ const ProfilePage = () => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // API call to update profile would go here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-
-      updateUser({
+      // Call backend API
+      const updatedUser = await authService.updateProfile({
         firstname: profileData.firstname,
         lastname: profileData.lastname,
+        phone: profileData.phone,
         matric_number: profileData.matric_number,
+        delivery_location: profileData.delivery_location,
+        bio: profileData.bio,
       });
+
+      // Update local context
+      updateUser(updatedUser);
 
       toast.success("Profile updated successfully!");
       setIsEditing(false);
-    } catch {
-      toast.error("Failed to update profile");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
     }
@@ -71,10 +77,10 @@ const ProfilePage = () => {
       firstname: user?.firstname || "",
       lastname: user?.lastname || "",
       email: user?.email || "",
-      phone: "",
+      phone: user?.phone || "",
       matric_number: user?.matric_number || "",
-      bio: "",
-      address: "",
+      bio: user?.bio || "",
+      delivery_location: user?.delivery_location || "",
     });
     setIsEditing(false);
   };
@@ -207,15 +213,15 @@ const ProfilePage = () => {
             </div>
 
             <div className='space-y-2 md:col-span-2'>
-              <Label htmlFor='address'>Address</Label>
+              <Label htmlFor='delivery_location'>Delivery Location</Label>
               <Input
-                id='address'
-                name='address'
-                value={profileData.address}
+                id='delivery_location'
+                name='delivery_location'
+                value={profileData.delivery_location}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className={!isEditing ? "bg-gray-50" : ""}
-                placeholder='Your current address'
+                placeholder='Your current delivery location (e.g., Hostel Name)'
               />
             </div>
           </div>
@@ -252,41 +258,7 @@ const ProfilePage = () => {
         </CardContent>
       </Card>
 
-      {/* Trust Activity Feed */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <span className="text-xl">🛡️</span>
-            Trust Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-             <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
-               <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                 🏅
-               </div>
-               <div>
-                 <p className="font-medium text-sm text-green-900">Verified Member</p>
-                 <p className="text-xs text-green-700">Identity verified via Campus Email</p>
-               </div>
-             </div>
 
-             {/* Mocked Verified Events - In real app, fetch from auditService */}
-             {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    📦
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm text-gray-900">Delivered via Post Office</p>
-                    <p className="text-xs text-gray-500">Verified by Campus Post Office - Jan {10 + i}</p>
-                  </div>
-                </div>
-             ))}
-          </div>
-        </CardContent>
-      </Card>
 
     </div>
   );
