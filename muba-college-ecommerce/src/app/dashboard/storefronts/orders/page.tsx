@@ -140,7 +140,7 @@ export default function VendorOrdersPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-2">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="font-bold text-3xl tracking-tight">Orders</h1>
