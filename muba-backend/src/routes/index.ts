@@ -12,6 +12,9 @@ import OrdersRoutes from "./orders.route";
 import DeliveryRoutes from "./delivery.route";
 import PostOfficeRoutes from "./postOffice.route";
 
+import BadgeRoutes from "./badges.route";
+import RewardsRoutes from "./rewards.route";
+
 const router = Router();
 
 router.use("/auth", AuthRoutes);
@@ -25,5 +28,7 @@ router.use("/payment", PaymentRoutes);
 router.use("/order", OrdersRoutes);
 router.use("/delivery", DeliveryRoutes);
 router.use("/post-office", PostOfficeRoutes);
+router.use("/badge", BadgeRoutes);
+router.use("/rewards", RewardsRoutes);
 
 export default router;
