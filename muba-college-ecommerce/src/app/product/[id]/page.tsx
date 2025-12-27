@@ -30,6 +30,7 @@ import { useCart } from "@/context/CartContext";
 import { useProduct, useStoreProducts } from "@/hooks/useProducts";
 import ExpandableTitle from "@/components/ExpandableTitle";
 import { Product } from "@/services/productService";
+import VariantSelector from "@/components/product/VariantSelector";
 
 // Helper components
 const renderStars = (rating: number, size = "w-4 h-4") => {
@@ -149,11 +150,21 @@ export default function ProductDetailsPage() {
 
     // Construct cart item options
     const options: any = {};
-    if (selectedVariant) {
+    if (selectedVariant && selectedVariant.attributes) {
+        // Use structured attributes for cart
+        Object.entries(selectedVariant.attributes).forEach(([key, value]) => {
+            options[key] = value;
+        });
+    } else if (selectedVariant) {
+        // Fallback for older data structure
         options[product.variantType || 'Variant'] = selectedVariant.name;
     }
 
-    await addItem({ ...product, price: displayPrice }, quantity, options);
+    await addItem({ 
+        ...product, 
+        price: displayPrice,
+        sku: selectedVariant?.sku || product.sku 
+    }, quantity, options);
   };
 
   // Safe getter helpers
@@ -258,8 +269,8 @@ export default function ProductDetailsPage() {
 
   return (
     <div className='bg-white min-h-screen'>
-      {/* Mobile Header */}
-      <div className='lg:hidden top-0 z-50 sticky bg-white px-4 py-3 border-b'>
+      {/* Mobile Header - Glassmorphism */}
+      <div className='lg:hidden top-0 z-50 sticky bg-white/80 backdrop-blur-md px-4 py-3 border-b'>
         <div className='flex justify-between items-center'>
           <Button
             variant='ghost'
@@ -337,100 +348,102 @@ export default function ProductDetailsPage() {
         </div>
       )}
 
-      <div className='mx-auto max-w-7xl'>
+      <div className='mx-auto max-w-screen-2xl'>
         {/* Main Product Section */}
-        <div className='lg:flex lg:gap-8 lg:p-6'>
+        <div className='lg:flex lg:gap-12 lg:p-8 xl:p-12'>
           {/* Left Column - Images */}
-          <div className='lg:w-1/2'>
-            <div className='lg:top-6 lg:sticky'>
-              {/* Main Image */}
-              <div className='relative bg-white'>
-                <div
-                  className='relative aspect-square cursor-pointer lg:cursor-default'
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onClick={() => setIsImageExpanded(true)}
-                >
-                  <img
-                    src={currentImage}
-                    alt={product.title}
-                    className='bg-gray-50 w-full h-full object-contain'
-                  />
-
-                  {/* Mobile expand icon */}
-                  <div className='lg:hidden top-4 left-4 absolute'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='bg-white/80 hover:bg-white p-2'
-                    >
-                      <Maximize className='w-4 h-4' />
-                    </Button>
-                  </div>
-
-                  {/* Navigation Arrows - Desktop */}
-                  {productImages.length > 1 && (
-                    <>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        className='hidden top-1/2 left-4 absolute lg:flex bg-white/90 hover:bg-white shadow-md p-0 rounded-full w-10 h-10 -translate-y-1/2'
-                        onClick={prevImage}
-                      >
-                        <ChevronLeft className='w-5 h-5' />
-                      </Button>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        className='hidden top-1/2 right-4 absolute lg:flex bg-white/90 hover:bg-white shadow-md p-0 rounded-full w-10 h-10 -translate-y-1/2'
-                        onClick={nextImage}
-                      >
-                        <ChevronRight className='w-5 h-5' />
-                      </Button>
-                    </>
-                  )}
-
-                  {/* Image Counter */}
-                  {productImages.length > 0 && (
-                    <div className='top-4 right-4 absolute bg-black/60 px-3 py-1 rounded-full text-white text-sm'>
-                      {currentImageIndex + 1} / {productImages.length}
-                    </div>
-                  )}
-
-                  {/* Discount Badge */}
-                  {discountPercentage > 0 && (
-                    <div className='top-16 lg:top-4 left-4 absolute'>
-                      <Badge variant='destructive' className='font-bold'>
-                        -{discountPercentage}% OFF
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Thumbnail Images - Desktop */}
+          <div className='lg:w-3/5'>
+            <div className='lg:flex lg:gap-6 lg:sticky lg:top-10 items-start'>
+              {/* Thumbnail Images - Desktop (Left Side) */}
               {productImages.length > 1 && (
-                <div className='hidden lg:flex gap-2 mt-4 overflow-x-auto'>
+                <div className='hidden lg:flex flex-col gap-3 w-20 shrink-0'>
                   {productImages.map((image, index) => (
                     <button
                       key={index}
-                      className={`shrink-0 w-20 h-20 bg-gray-50 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`w-full aspect-square bg-gray-50 rounded-sm overflow-hidden border transition-all duration-200 ${
                         index === currentImageIndex
-                          ? "border-[#3bb85e]"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-black ring-1 ring-black"
+                          : "border-gray-200 hover:border-gray-400"
                       }`}
                       onClick={() => setCurrentImageIndex(index)}
                     >
                       <img
                         src={image}
                         alt={`${product.title} ${index + 1}`}
-                        className='w-full h-full object-contain'
+                        className='w-full h-full object-cover'
                       />
                     </button>
                   ))}
                 </div>
               )}
+
+              {/* Main Image Content */}
+              <div className='flex-1'>
+                <div className='relative bg-white group'>
+                  <div
+                    className='relative aspect-[4/5] sm:aspect-square lg:aspect-[4/5] cursor-pointer lg:cursor-zoom-in overflow-hidden'
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onClick={() => setIsImageExpanded(true)}
+                  >
+                    <img
+                      src={currentImage}
+                      alt={product.title}
+                      className='bg-gray-50 w-full h-full object-cover transition-transform duration-500 hover:scale-105'
+                    />
+
+                    {/* Mobile expand icon */}
+                    <div className='lg:hidden top-4 left-4 absolute'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='bg-white/80 hover:bg-white p-2 rounded-full'
+                      >
+                        <Maximize className='w-4 h-4' />
+                      </Button>
+                    </div>
+
+                    {/* Navigation Arrows - Desktop (Overlay) */}
+                    {productImages.length > 1 && (
+                      <>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='hidden group-hover:flex top-1/2 left-4 absolute bg-white/90 hover:bg-white shadow-sm p-0 rounded-full w-10 h-10 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity'
+                          onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                        >
+                          <ChevronLeft className='w-5 h-5' />
+                        </Button>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='hidden group-hover:flex top-1/2 right-4 absolute bg-white/90 hover:bg-white shadow-sm p-0 rounded-full w-10 h-10 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity'
+                          onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                        >
+                          <ChevronRight className='w-5 h-5' />
+                        </Button>
+                      </>
+                    )}
+
+                    {/* Image Counter */}
+                    {productImages.length > 0 && (
+                      <div className='bottom-4 right-4 absolute bg-black/50 px-3 py-1 rounded-sm text-white text-[10px] tracking-widest uppercase'>
+                        {currentImageIndex + 1} / {productImages.length}
+                      </div>
+                    )}
+
+                    {/* Discount Badge */}
+                    {discountPercentage > 0 && (
+                      <div className='top-4 right-4 absolute'>
+                        <Badge variant='destructive' className='rounded-none px-3 font-medium uppercase text-[10px] tracking-wider'>
+                          {discountPercentage}% OFF
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -458,44 +471,47 @@ export default function ProductDetailsPage() {
               </div>
             </div>
 
-            <ExpandableTitle text={product.title} />
+            <div className='lg:mb-2 space-y-1'>
+              <h1 className='text-2xl lg:text-4xl font-light tracking-tight text-gray-900 leading-tight'>
+                {product.title}
+              </h1>
+            </div>
 
             {/* Price & Rating */}
-            <div className='mb-6'>
-              <div className='flex items-baseline gap-3 mb-3'>
-                <span className='font-bold text-red-600 text-3xl lg:text-4xl'>
+            <div className='mb-8 mt-4'>
+              <div className='flex items-baseline gap-4 mb-2'>
+                <span className='font-medium text-gray-900 text-2xl lg:text-3xl'>
                   ₦{displayPrice.toLocaleString()}
                 </span>
-                {product.originalPrice && (
-                  <span className='text-gray-500 text-sm line-through'>
+                {product.originalPrice && !selectedVariant && (
+                  <span className='text-gray-400 text-lg line-through'>
                     ₦{product.originalPrice.toLocaleString()}
+                  </span>
+                )}
+                {selectedVariant?.sku && (
+                  <span className='text-[10px] text-gray-400 font-mono ml-auto'>
+                    SKU: {selectedVariant.sku}
                   </span>
                 )}
               </div>
 
               {/* Variant Selector */}
-              {product.productType === 'variable' && product.variants && product.variants.length > 0 && (
-                  <div className="mb-4">
-                      <h3 className="text-sm font-medium mb-2 text-gray-900">{product.variantType || "Options"}:</h3>
-                      <div className="flex flex-wrap gap-2">
-                          {product.variants.map((variant: any, idx: number) => {
-                              const isSelected = selectedVariant?.name === variant.name;
-                              return (
-                                  <button
-                                      key={idx}
-                                      onClick={() => setSelectedVariant(variant)}
-                                      className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
-                                          isSelected 
-                                          ? "bg-black text-white border-black" 
-                                          : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"
-                                      }`}
-                                  >
-                                      {variant.name}
-                                      {variant.price ? ` (+₦${variant.price})` : ''}
-                                  </button>
-                              )
-                          })}
-                      </div>
+              {product.productType === 'variant' && product.variants && product.variants.length > 0 && (
+                  <div className="mb-8 border-t border-gray-100 pt-6">
+                      <VariantSelector 
+                        variantType={product.variantType || "Custom"}
+                        variants={product.variants}
+                        onVariantSelect={(v) => {
+                            setSelectedVariant(v);
+                            // If variant has images, try to show the first one
+                            if (v?.images?.[0]) {
+                                const imgIndex = product.images.indexOf(v.images[0]);
+                                if (imgIndex !== -1) {
+                                    setCurrentImageIndex(imgIndex);
+                                }
+                            }
+                        }}
+                      />
                   </div>
               )}
 
@@ -558,70 +574,141 @@ export default function ProductDetailsPage() {
             </div>
 
             {/* Store/Seller Info */}
-            <Link href={`/store/${product.store?._id}`}>
-              <Card className='mb-6 hover:shadow-md transition-shadow'>
-                <CardContent className='p-4'>
-                  <div className='flex items-center gap-3'>
-                    <div className='flex justify-center items-center bg-[#3bb85e] rounded-full w-10 h-10 font-bold text-white'>
-                      {getSellerInitials()}
-                    </div>
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex items-center gap-2 font-semibold'>
-                        <span className='truncate'>{getSellerName()}</span>
-                        {product.store?.verified && (
-                          <Badge variant='secondary' className='text-xs'>
-                            <Check className='mr-1 w-3 h-3' />
-                            Verified
-                          </Badge>
-                        )}
-                      </div>
-                      <div className='text-gray-600 text-sm truncate'>
-                        {product.store?.name || "Unknown Store"}
-                      </div>
-                    </div>
-                    <Button variant='outline' size='sm'>
-                      <MessageCircle className='mr-2 w-4 h-4' />
-                      Chat
-                    </Button>
+            <div className='mb-8 py-6 border-y border-gray-100'>
+              <Link href={`/store/${product.store?._id}`} className='group'>
+                <div className='flex items-center gap-4'>
+                  <div className='flex justify-center items-center bg-gray-100 group-hover:bg-gray-200 transition-colors rounded-full w-12 h-12 font-medium text-gray-900 border border-gray-200'>
+                    {getSellerInitials()}
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center gap-2 font-medium text-gray-900'>
+                      <span className='truncate'>{getSellerName()}</span>
+                      {product.store?.verified && (
+                        <Check className='w-3 h-3 text-[#3bb85e]' />
+                      )}
+                    </div>
+                    <div className='text-gray-500 text-xs tracking-wide uppercase mt-0.5'>
+                      {product.store?.name || "Unknown Store"}
+                    </div>
+                  </div>
+                  <Button variant='ghost' size='sm' className='rounded-none border border-gray-200 text-[10px] font-bold uppercase tracking-wider h-8'>
+                    Message
+                  </Button>
+                </div>
+              </Link>
+            </div>
 
             {/* Quantity and Actions */}
-            <div className='bottom-0 sticky lg:static bg-white p-4 border-t lg:border-none'>
-              <div className='flex gap-4 mb-4'>
-                <div className='flex items-center border rounded-md'>
+            {/* Desktop View */}
+            <div className='hidden lg:block bg-white mt-8'>
+              <div className='flex items-center gap-4 mb-6'>
+                <div className='flex items-center border border-gray-200 rounded-sm h-12 px-2'>
                   <Button
                     variant='ghost'
                     size='icon'
                     onClick={decreaseQuantity}
                     disabled={quantity <= 1}
+                    className='hover:bg-transparent'
                   >
                     <Minus className='w-4 h-4' />
                   </Button>
-                  <span className='w-12 text-center font-medium'>{quantity}</span>
+                  <span className='w-10 text-center font-medium'>{quantity}</span>
                   <Button
                     variant='ghost'
                     size='icon'
                     onClick={increaseQuantity}
                     disabled={quantity >= displayStock}
+                    className='hover:bg-transparent'
                   >
                     <Plus className='w-4 h-4' />
                   </Button>
                 </div>
-                <Button
-                  className='flex-1 bg-[#3bb85e] hover:bg-[#2d8f4a] h-10'
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock || (product.productType === 'variable' && !selectedVariant)}
-                >
-                  {isOutOfStock ? "Out of Stock" : "Add to Cart"}
-                </Button>
+                
+                <div className='flex-1 flex gap-3'>
+                  <Button
+                    id="desktop-buy-now-button"
+                    className='flex-1 bg-black hover:bg-gray-800 text-white rounded-none h-12 uppercase tracking-widest text-xs font-semibold transtion-all'
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || (product.productType === 'variable' && !selectedVariant)}
+                  >
+                    {isOutOfStock ? "Sold Out" : "Buy Product"}
+                  </Button>
+                  <Button
+                    id="desktop-add-to-cart-button"
+                    variant='outline'
+                    className='flex-1 border-black text-black hover:bg-black hover:text-white rounded-none h-12 uppercase tracking-widest text-xs font-semibold transition-all'
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || (product.productType === 'variable' && !selectedVariant)}
+                  >
+                    Add to Cart
+                  </Button>
+                </div>
+              </div>
+
+              {/* Description Snippet */}
+              {product.description && (
+                <div className='mt-8 pt-8 border-t border-gray-100'>
+                   <p className='text-gray-600 leading-relaxed text-sm'>
+                     {product.description.length > 300 ? `${product.description.substring(0, 300)}...` : product.description}
+                   </p>
+                   <button className='mt-4 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase border-b-2 border-black pb-1 hover:text-gray-600 transition-colors'>
+                      More Information
+                      <ChevronRight className='w-3 h-3' />
+                   </button>
+                </div>
+              )}
+            </div>
+
+            <div className='lg:hidden bottom-0 left-0 fixed z-40 bg-white/95 backdrop-blur-sm shadow-[0_-8px_30px_rgb(0,0,0,0.04)] p-4 border-t border-gray-100 w-full'>
+              <div className='flex items-center gap-4'>
+                <div className='flex-1'>
+                  <div className='font-medium text-gray-900 text-base'>
+                    ₦{displayPrice.toLocaleString()}
+                  </div>
+                  <div className='text-gray-400 text-[10px] line-through'>
+                    {product.originalPrice && `₦${product.originalPrice.toLocaleString()}`}
+                  </div>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <div className='flex items-center border border-gray-200 rounded-sm h-10'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      id="mobile-quantity-decrease"
+                      className='w-8 h-8 hover:bg-transparent'
+                      onClick={decreaseQuantity}
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className='w-3 h-3' />
+                    </Button>
+                    <span className='w-6 text-center text-xs font-medium'>{quantity}</span>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      id="mobile-quantity-increase"
+                      className='w-8 h-8 hover:bg-transparent'
+                      onClick={increaseQuantity}
+                      disabled={quantity >= displayStock}
+                    >
+                      <Plus className='w-3 h-3' />
+                    </Button>
+                  </div>
+                  <Button
+                    id="mobile-buy-now-button"
+                    className='bg-black hover:bg-gray-800 text-white rounded-none px-6 h-10 text-[10px] font-bold uppercase tracking-widest'
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || (product.productType === 'variable' && !selectedVariant)}
+                  >
+                    {isOutOfStock ? "Sold Out" : "Buy Now"}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {/* Spacer for mobile sticky footer */}
+      <div className='lg:hidden h-24' />
     </div>
   );
 }

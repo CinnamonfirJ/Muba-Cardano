@@ -37,7 +37,8 @@ export interface Product {
   // Optional fields for different product types
   sizes?: (string | number)[];
   colors?: string[];
-  productType?: 'simple' | 'variable' | 'batch';
+  productType?: 'simple' | 'variable' | 'batch' | 'variant' | 'single' | 'random';
+  sku?: string;
   batchConfig?: {
     minOrder: number;
     currentOrder: number;

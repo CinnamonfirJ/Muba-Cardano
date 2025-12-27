@@ -38,7 +38,7 @@ export default function ProductForm({ storeId, initialData, isEditing = false }:
     initialData?.images || []
   );
 
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
@@ -61,6 +61,40 @@ export default function ProductForm({ storeId, initialData, isEditing = false }:
       warranty: initialData?.warranty || "No Warranty"
     },
   });
+
+  // Reset form when initialData loads or changes
+  useEffect(() => {
+    if (initialData) {
+        // Ensure variants from API are mapped correctly to form structure if needed
+        // The form expects variants array to match defaultValues structure
+        reset({
+            title: initialData.title || "",
+            description: initialData.description || "",
+            price: initialData.price || "",
+            originalPrice: initialData.originalPrice || "",
+            category: Array.isArray(initialData.category) ? initialData.category[0] : (initialData.category || ""),
+            condition: initialData.condition || "New",
+            inStock: initialData.inStock ?? true,
+            stockCount: initialData.stockCount || 1,
+            productType: initialData.productType || (initialData.variants?.length ? "variant" : "single"),
+            variantType: initialData.variantType || (initialData.colors?.length ? "Color" : "None"),
+            variants: initialData.variants || [],
+            batchConfig: initialData.batchConfig || {
+                minOrder: 5,
+                currentOrder: 0,
+                batchStatus: "collecting"
+            },
+            specifications: initialData.specifications || {},
+            deliveryTime: initialData.deliveryTime || "3-5 days",
+            warranty: initialData.warranty || "No Warranty"
+        });
+        
+        // Also update image previews
+        if (initialData.images) {
+            setImagePreviews(initialData.images);
+        }
+    }
+  }, [initialData, reset]);
 
   const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
     control,
@@ -114,8 +148,20 @@ export default function ProductForm({ storeId, initialData, isEditing = false }:
 
     // Variants
     if (["variant", "random"].includes(data.productType)) {
+         const processedVariants = data.variants.map((v: any) => {
+             // Generate structured name from attributes if possible
+             if (v.attributes && Object.keys(v.attributes).length > 0) {
+                 const attrValues = Object.values(v.attributes).filter(Boolean);
+                 if (attrValues.length > 0) {
+                     v.name = attrValues.join(" / ");
+                 }
+                 // Ensure options array matches attributes for sequential processing if needed
+                 v.options = Object.values(v.attributes);
+             }
+             return v;
+         });
          formData.append("variantType", data.variantType);
-         formData.append("variants", JSON.stringify(data.variants));
+         formData.append("variants", JSON.stringify(processedVariants));
     } else {
          // Single product stock
          formData.append("stockCount", data.stockCount.toString());
@@ -247,8 +293,12 @@ export default function ProductForm({ storeId, initialData, isEditing = false }:
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="mb-4">
-                            <Label>Variant Type</Label>
-                             <Select onValueChange={(val) => setValue("variantType", val)} defaultValue="Size">
+                            <Label>Variant Selection Mode</Label>
+                             <Select onValueChange={(val) => {
+                                 setValue("variantType", val);
+                                 // Optionally clear variants when switching types? 
+                                 // For now just let the user re-configure
+                             }} defaultValue={initialData?.variantType || "Size"}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="e.g. Size, Color" />
                                 </SelectTrigger>
@@ -257,29 +307,65 @@ export default function ProductForm({ storeId, initialData, isEditing = false }:
                                     <SelectItem value="Color">Color (Red, Blue)</SelectItem>
                                     <SelectItem value="Color+Size">Color & Size</SelectItem>
                                     <SelectItem value="Custom">Custom</SelectItem>
+                                    <SelectItem value="None">None</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
+                        {variantFields.length === 0 && (
+                            <div className="text-center py-8 border-2 border-dashed rounded-md bg-gray-50">
+                                <p className="text-sm text-gray-500">No variants defined. Click "Add Variant" to start.</p>
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
                         {variantFields.map((field, index) => (
-                            <div key={field.id} className="flex gap-3 items-end border p-3 rounded-md bg-gray-50/50">
-                                <div className="grid gap-2 flex-1">
-                                    <Label className="text-xs">Option Name</Label>
-                                    <Input placeholder="e.g. Red, XL" {...register(`variants.${index}.name` as const, { required: true })} />
-                                </div>
-                                <div className="grid gap-2 w-24">
-                                    <Label className="text-xs">Price (+/-)</Label>
-                                    <Input type="number" placeholder="0" {...register(`variants.${index}.price` as const)} />
-                                </div>
-                                <div className="grid gap-2 w-20">
-                                    <Label className="text-xs">Stock</Label>
-                                    <Input type="number" {...register(`variants.${index}.stock` as const)} />
-                                </div>
-                                <Button type="button" variant="ghost" size="icon" onClick={() => removeVariant(index)} className="text-red-500">
-                                    <Trash2 className="w-4 h-4" />
+                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-3 items-end border p-3 rounded-md bg-gray-50/50 relative group">
+                                <Button 
+                                    type="button" 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => removeVariant(index)} 
+                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border shadow-sm text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                >
+                                    <X className="w-3 h-3" />
                                 </Button>
+
+                                {/* Dynamic Attribute Inputs */}
+                                {(variantType === "Color" || variantType === "Color+Size") && (
+                                    <div className="grid gap-2 md:col-span-1">
+                                        <Label className="text-[10px] uppercase font-bold text-gray-400">Color</Label>
+                                        <Input placeholder="e.g. Red" {...register(`variants.${index}.attributes.color` as const, { required: true })} />
+                                    </div>
+                                )}
+                                {(variantType === "Size" || variantType === "Color+Size") && (
+                                    <div className="grid gap-2 md:col-span-1">
+                                        <Label className="text-[10px] uppercase font-bold text-gray-400">Size</Label>
+                                        <Input placeholder="e.g. XL" {...register(`variants.${index}.attributes.size` as const, { required: true })} />
+                                    </div>
+                                )}
+                                {variantType === "Custom" && (
+                                    <div className="grid gap-2 md:col-span-1">
+                                        <Label className="text-[10px] uppercase font-bold text-gray-400">Option Name</Label>
+                                        <Input placeholder="e.g. Memory" {...register(`variants.${index}.name` as const, { required: true })} />
+                                    </div>
+                                )}
+
+                                <div className="grid gap-2">
+                                    <Label className="text-[10px] uppercase font-bold text-gray-400">Price (₦)</Label>
+                                    <Input type="number" placeholder="Price" {...register(`variants.${index}.price` as const, { required: true })} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-[10px] uppercase font-bold text-gray-400">Stock</Label>
+                                    <Input type="number" {...register(`variants.${index}.stock` as const, { required: true })} />
+                                </div>
+                                <div className="grid gap-2 md:col-span-1">
+                                    <Label className="text-[10px] uppercase font-bold text-gray-400">SKU</Label>
+                                    <Input placeholder="Optional" {...register(`variants.${index}.sku` as const)} />
+                                </div>
                             </div>
                         ))}
+                        </div>
                     </CardContent>
                 </Card>
             )}

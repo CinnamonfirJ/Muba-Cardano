@@ -15,7 +15,9 @@ export default function EditProductPage() {
    // Assuming [productId] folder name means params.productId
   const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId;
 
-  const { data: product, isLoading, error } = useProduct(productId || "");
+  const { data: productData, isLoading, error } = useProduct(productId || "");
+  // Extract product from response structure (handling { data: Product } or Product)
+  const product = productData?.data || productData || null;
 
   if (!storeId || !productId) return null;
 

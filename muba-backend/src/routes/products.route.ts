@@ -28,7 +28,7 @@ router.route("/store/:storeId").get(GetProductsByStore);
 router
   .route("/:_id") // for individal product
   .get(GetProduct) // anyoune can get or view a particular product
-  .patch(AuthMiddleware, CheckVendor, VerifyProductOwner, EditProduct) // only vendors can edit/update product information (it's a protected route)
+  .patch(AuthMiddleware, upload.array("images", 10), CheckVendor, VerifyProductOwner, EditProduct) // only vendors can edit/update product information (it's a protected route)
   .delete(AuthMiddleware, CheckVendor, VerifyProductOwner, DeleteProduct); // only vendors can delete product (it's a protected route)
 
 export default router;

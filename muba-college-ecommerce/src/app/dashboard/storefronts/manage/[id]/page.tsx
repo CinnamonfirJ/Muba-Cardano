@@ -35,7 +35,7 @@ interface Product {
   desc: string;
   price: number;
   stock: number;
-  img: string[];
+  images: string[];
   category: string;
   store: any;
   createdAt: string;
@@ -212,9 +212,9 @@ export default function ManageStorePage() {
                       <TableCell>
                         <div className="flex items-center gap-3 min-w-[200px]">
                           <div className="relative h-12 w-12 rounded overflow-hidden bg-gray-100 shrink-0">
-                            {product.img?.[0] && (
+                            {product.images?.[0] && (
                               <Image
-                                src={product.img[0]}
+                                src={product.images[0]}
                                 alt={product.title}
                                 fill
                                 className="object-cover"

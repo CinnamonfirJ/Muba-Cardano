@@ -223,7 +223,7 @@ const Navbar = () => {
 
           {/* Mobile */}
           <div className="md:hidden flex items-center space-x-2">
-            <Link href="/cart" className="relative p-2 text-gray-700">
+            <Link href="/checkout" className="relative p-2 text-gray-700">
               <ShoppingCart className="w-6 h-6" />
               {cartItemsCount > 0 && (
                 <span className="-top-1 -right-1 absolute flex justify-center items-center bg-[#3bb85e] rounded-full w-5 h-5 text-white text-xs">

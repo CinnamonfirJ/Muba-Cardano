@@ -217,14 +217,12 @@ const CheckoutPage = () => {
         </div>
 
         {/* Progress Steps */}
-        <div className='flex justify-center items-center mb-8'>
-          {/* ... steps ... */}
-          <div className='flex items-center space-x-4'>
+        <div className='flex justify-center mb-8 overflow-x-auto pb-4 sm:pb-0'>
+          <div className='flex items-center space-x-2 sm:space-x-4 min-w-max px-4'>
             {["cart", "shipping", "payment"].map((stepName, index) => (
               <div key={stepName} className='flex items-center'>
-                {/* ... */}
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors ${
                     step === stepName
                       ? "bg-[#3bb85e] text-white"
                       : index < ["cart", "shipping", "payment"].indexOf(step)
@@ -232,25 +230,24 @@ const CheckoutPage = () => {
                         : "bg-gray-200 text-gray-600"
                   }`}
                 >
-                  {/* ... */}
                   {index < ["cart", "shipping", "payment"].indexOf(step) ? (
-                    <CheckCircle className='w-4 h-4' />
+                    <CheckCircle className='w-3 h-3 sm:w-4 sm:h-4' />
                   ) : (
                     index + 1
                   )}
                 </div>
-                <span className='ml-2 font-medium text-sm capitalize'>
+                <span className={`ml-1 sm:ml-2 font-medium text-xs sm:text-sm capitalize ${step === stepName ? 'text-[#3bb85e]' : 'text-gray-500'}`}>
                   {stepName}
                 </span>
-                {index < 2 && <div className='bg-gray-300 mx-4 w-8 h-px' />}
+                {index < 2 && <div className='bg-gray-300 mx-2 sm:mx-4 w-4 sm:w-8 h-px' />}
               </div>
             ))}
           </div>
         </div>
 
-        <div className='gap-8 grid grid-cols-1 lg:grid-cols-3'>
+        <div className='flex flex-col lg:grid lg:grid-cols-3 gap-8'>
           {/* Main Content */}
-          <div className='lg:col-span-2'>
+          <div className='order-2 lg:order-1 lg:col-span-2'>
             {/* ... Cart Step ... */}
             {step === "cart" && (
               <Card>
@@ -260,57 +257,76 @@ const CheckoutPage = () => {
                   {cartState.items.map((item) => (
                     <div
                       key={item.product._id}
-                      className='flex items-center gap-4 p-4 border rounded-lg'
+                      className='flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-lg'
                     >
-                      <img
-                        src={item.product.images?.[0] || "/placeholder.svg"}
-                        alt={item.product.title}
-                        className='rounded-lg w-16 h-16 object-cover'
-                      />
-                      <div className='flex-1'>
+                      <div className='flex items-center gap-4 w-full sm:w-auto'>
+                        <img
+                          src={item.product.images?.[0] || "/placeholder.svg"}
+                          alt={item.product.title}
+                          className='rounded-lg w-16 h-16 object-cover flex-shrink-0'
+                        />
+                        <div className='flex-1 sm:hidden'>
+                           <ExpandableTitle text={item.product.title} />
+                           <p className='text-gray-600 text-xs'>
+                            by {item.product.store?.owner?.firstname}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className='hidden sm:block flex-1'>
                         <ExpandableTitle text={item.product.title} />
                         <p className='text-gray-600 text-sm'>
-                          by {item.product.seller?.firstname}
-                        </p>
-                        <p className='font-bold text-[#3bb85e] text-lg'>
-                          ₦{item.product.price.toLocaleString()}
+                          by {item.product.store?.owner?.firstname}
                         </p>
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() =>
-                            handleQuantityChange(
-                              item.product._id,
-                              item.quantity - 1
-                            )
-                          }
-                        >
-                          <Minus className='w-4 h-4' />
-                        </Button>
-                        <span className='w-8 text-center'>{item.quantity}</span>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() =>
-                            handleQuantityChange(
-                              item.product._id,
-                              item.quantity + 1
-                            )
-                          }
-                        >
-                          <Plus className='w-4 h-4' />
-                        </Button>
+
+                      <div className='flex items-center justify-between w-full sm:w-auto gap-4'>
+                        <div className='sm:text-right'>
+                           <p className='font-bold text-[#3bb85e] text-lg'>
+                            ₦{item.product.price.toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className='flex items-center gap-2'>
+                          <div className='flex items-center border rounded-md'>
+                            <Button
+                              variant='outline'
+                              size='icon'
+                              className="h-8 w-8"
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.product._id,
+                                  item.quantity - 1
+                                )
+                              }
+                            >
+                              <Minus className='w-3 h-3' />
+                            </Button>
+                            <span className='w-8 text-center text-sm'>{item.quantity}</span>
+                            <Button
+                              variant='outline'
+                              size='icon'
+                              className="h-8 w-8"
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.product._id,
+                                  item.quantity + 1
+                                )
+                              }
+                            >
+                              <Plus className='w-3 h-3' />
+                            </Button>
+                          </div>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => removeItem(item.product._id)}
+                            className='text-red-600 hover:text-red-700 h-8 w-8 p-0'
+                          >
+                            <Trash2 className='w-4 h-4' />
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => removeItem(item.product._id)}
-                        className='text-red-600 hover:text-red-700'
-                      >
-                        <Trash2 className='w-4 h-4' />
-                      </Button>
                     </div>
                   ))}
                   <div className='flex justify-end'>
@@ -436,7 +452,7 @@ const CheckoutPage = () => {
                       />
                     </div>
 
-                    <div className='flex justify-between'>
+                    <div className='flex md:flex-row flex-col gap-3 justify-between'>
                       <Button
                         type='button'
                         variant='outline'
@@ -484,7 +500,7 @@ const CheckoutPage = () => {
                       </div>
                     </div>
 
-                    <div className='flex justify-between'>
+                    <div className='flex md:flex-row flex-col gap-3 justify-between'>
                       <Button
                         type='button'
                         variant='outline'
@@ -507,7 +523,7 @@ const CheckoutPage = () => {
           </div>
 
           {/* Order Summary */}
-          <div className='lg:col-span-1'>
+          <div className='order-1 lg:order-2 lg:col-span-1'>
             <Card className='top-4 sticky'>
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>

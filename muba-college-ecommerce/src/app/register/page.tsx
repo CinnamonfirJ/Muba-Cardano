@@ -102,7 +102,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className='flex justify-center items-center bg-linear-to-br from-[#e0f5e7] to-[#d2fade] px-4 py-8 min-h-screen'>
+    <div className='flex justify-center items-center bg-gradient-to-br from-[#e0f5e7] to-[#d2fade] p-4 sm:p-6 lg:p-8 min-h-screen'>
       <Card className='w-full max-w-md'>
         <CardHeader className='text-center'>
           <div className='flex justify-center mb-4'>
@@ -115,21 +115,42 @@ const RegisterPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className='space-y-4'>
-            {/* First Name */}
-            <div className='space-y-2'>
-              <Label htmlFor='firstname'>First Name *</Label>
-              <div className='relative'>
-                <User className='top-3 left-3 absolute w-4 h-4 text-gray-400' />
-                <Input
-                  id='firstname'
-                  name='firstname'
-                  type='text'
-                  placeholder='Enter your first name'
-                  value={formData.firstname}
-                  onChange={handleChange}
-                  className='pl-10'
-                  required
-                />
+            {/* Name Fields - Grid on desktop */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              {/* First Name */}
+              <div className='space-y-2'>
+                <Label htmlFor='firstname'>First Name *</Label>
+                <div className='relative'>
+                  <User className='top-3 left-3 absolute w-4 h-4 text-gray-400' />
+                  <Input
+                    id='firstname'
+                    name='firstname'
+                    type='text'
+                    placeholder='Enter your first name'
+                    value={formData.firstname}
+                    onChange={handleChange}
+                    className='pl-10'
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Last Name */}
+              <div className='space-y-2'>
+                <Label htmlFor='lastname'>Last Name *</Label>
+                <div className='relative'>
+                  <User className='top-3 left-3 absolute w-4 h-4 text-gray-400' />
+                  <Input
+                    id='lastname'
+                    name='lastname'
+                    type='text'
+                    placeholder='Enter your last name'
+                    value={formData.lastname}
+                    onChange={handleChange}
+                    className='pl-10'
+                    required
+                  />
+                </div>
               </div>
             </div>
 
@@ -146,24 +167,6 @@ const RegisterPage = () => {
                   value={formData.middlename}
                   onChange={handleChange}
                   className='pl-10'
-                />
-              </div>
-            </div>
-
-            {/* Last Name */}
-            <div className='space-y-2'>
-              <Label htmlFor='lastname'>Last Name *</Label>
-              <div className='relative'>
-                <User className='top-3 left-3 absolute w-4 h-4 text-gray-400' />
-                <Input
-                  id='lastname'
-                  name='lastname'
-                  type='text'
-                  placeholder='Enter your last name'
-                  value={formData.lastname}
-                  onChange={handleChange}
-                  className='pl-10'
-                  required
                 />
               </div>
             </div>

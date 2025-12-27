@@ -97,7 +97,7 @@ async function seedDatabase() {
     const store = await Stores.create({
       name: "Jane’s Store",
       description: "Quality products at great prices",
-      img: "https://placehold.co/600x400",
+      img: "https://res.cloudinary.com/daaoayc7l/image/upload/v1766840756/download_8_vqdiqk.jpg",
       location: "Lagos, Nigeria",
       owner: vendor._id,
       categories: ["electronics", "fashion"],
@@ -112,7 +112,7 @@ async function seedDatabase() {
       productType: "variant",
       title: "T-Shirt",
       description: "Comfortable cotton t-shirt",
-      images: ["https://placehold.co/300"],
+      images: ["https://res.cloudinary.com/daaoayc7l/image/upload/v1766841304/8b81a957f67465121d5b76467a997d58d444de69_jcdjy9.png"],
       category: ["fashion"],
       condition: "new",
       location: store.location,
@@ -138,9 +138,108 @@ async function seedDatabase() {
     });
 
     store.products.push(product._id);
+
+    // Xiaomi Redmi 10 C Phone Case - Genshin Impact
+const xiaomiCase = await Products.create({
+  productType: "variant",
+  title: "Xiaomi Redmi 10 C Phone Case - Genshin Impact",
+  description: "Protective and stylish Genshin Impact phone case for Xiaomi Redmi 10 C",
+  images: [
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841827/1756674592058_wvpcgk.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841827/1756674592075_wugrpx.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841826/1756674592064_b5jrjx.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841826/1756674592069_bkvjc7.jpg"
+  ],
+  category: ["electronics", "accessories"],
+  condition: "new",
+  location: store.location,
+  price: 3000,
+  stockCount: 50,
+  seller: vendor._id,
+  store: store._id,
+  variantType: "Color",
+  variants: [
+    { name: "Red", price: 3000, stock: 25, attributes: { color: "Red" } },
+    { name: "Blue", price: 3100, stock: 25, attributes: { color: "Blue" } },
+  ],
+});
+store.products.push(xiaomiCase._id);
+
+// iPhone Phone Case - Genshin Impact
+const iphoneCase = await Products.create({
+  productType: "variant",
+  title: "iPhone Phone Case - Genshin Impact",
+  description: "Premium Genshin Impact phone case for various iPhone models",
+  images: [
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841826/1756674592053_vz0hgj.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841825/1756674592042_agitvu.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841825/1756674592047_ujwygy.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841825/1756674592037_mhmizz.jpg"
+  ],
+  category: ["electronics", "accessories"],
+  condition: "new",
+  location: store.location,
+  price: 3500,
+  stockCount: 40,
+  seller: vendor._id,
+  store: store._id,
+  variantType: "Color",
+  variants: [
+    { name: "Black", price: 3500, stock: 20, attributes: { color: "Black" } },
+    { name: "White", price: 3600, stock: 20, attributes: { color: "White" } },
+  ],
+});
+store.products.push(iphoneCase._id);
+
+// Female Ankara Gown
+const ankaraGown = await Products.create({
+  productType: "variant",
+  title: "Female Ankara Gown",
+  description: "Elegant and colorful female Ankara gown, perfect for any occasion",
+  images: [
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841825/1756674592025_xcf7f4.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841825/1756674592020_ytr7zu.jpg",
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841824/1756674592014_qpbmza.jpg"
+  ],
+  category: ["fashion", "women"],
+  condition: "new",
+  location: store.location,
+  price: 15000,
+  stockCount: 20,
+  seller: vendor._id,
+  store: store._id,
+  variantType: "Size",
+  variants: [
+    { name: "S", price: 15000, stock: 5, attributes: { size: "S" } },
+    { name: "M", price: 15000, stock: 5, attributes: { size: "M" } },
+    { name: "L", price: 15000, stock: 5, attributes: { size: "L" } },
+    { name: "XL", price: 15000, stock: 5, attributes: { size: "XL" } },
+  ],
+});
+store.products.push(ankaraGown._id);
+
+// Boba Tea Sticker
+const bobaTea = await Products.create({
+  productType: "single",
+  title: "Boba Tea Sticker",
+  description: "Cute and fun boba tea sticker for decorating laptops, notebooks, and more",
+  images: [
+    "https://res.cloudinary.com/daaoayc7l/image/upload/v1766841824/_Graveyard_boba_tea_with_many_ghosts__Sticker_for_Sale_by_Inkcapella_mtafti.jpg"
+  ],
+  category: ["accessories", "stickers"],
+  condition: "new",
+  location: store.location,
+  price: 800,
+  stockCount: 100,
+  seller: vendor._id,
+  store: store._id,
+});
+store.products.push(bobaTea._id);
+
+    
     await store.save();
 
-    console.log("📦 Product created");
+   console.log("📦 5 new products created successfully!");
 
     // --------------------
     // STORE REVIEW

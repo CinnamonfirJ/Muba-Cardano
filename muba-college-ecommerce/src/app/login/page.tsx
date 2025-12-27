@@ -51,7 +51,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className='flex justify-center items-center bg-linear-to-br from-[#e0f5e7] to-[#d2fade] px-4 min-h-screen'>
+    <div className='flex justify-center items-center bg-gradient-to-br from-[#e0f5e7] to-[#d2fade] p-4 sm:p-6 min-h-screen'>
       <Card className='w-full max-w-md'>
         <CardHeader className='text-center'>
           <div className='flex justify-center mb-4'>
