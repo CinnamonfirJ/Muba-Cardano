@@ -27,10 +27,16 @@ router
   .get(GetStores);
 
 router.get("/user/:userId", GetUserStores);
+router.route("/search").get(SearchStores);
+
+router.route("/:_id/follow").post(AuthMiddleware, FollowStore);
+router.route("/:_id/unfollow").post(AuthMiddleware, UnfollowStore);
+router.route("/:_id/rate").post(AuthMiddleware, RateStore);
+router.route("/:_id/reviews").get(GetStoreReviews);
 
 router
   .route("/:_id") // for individual store
-  .get(GetStore) // anyoune can get or view a particular store
+  .get(GetStore) // anyone can get or view a particular store
   .patch(
     AuthMiddleware,
     upload.fields([{ name: "img", maxCount: 1 }]),
@@ -39,12 +45,5 @@ router
     EditStoreDetails
   ) // only vendors can edit/update store information (it's a protected route)
   .delete(AuthMiddleware, CheckVendor, VerifyStoreOwner, DeleteStore); // only vendors can delete store (it's a protected route)
-
-router.route("/:_id/follow").post(AuthMiddleware, FollowStore);
-router.route("/:_id/unfollow").post(AuthMiddleware, UnfollowStore);
-router.route("/:_id/rate").post(AuthMiddleware, RateStore);
-router.route("/:_id/reviews").get(GetStoreReviews);
-
-router.route("/search").get(SearchStores);
 
 export default router;
