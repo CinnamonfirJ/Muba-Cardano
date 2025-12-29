@@ -21,6 +21,7 @@ import {
   Store,
   Shield,
   Building2,
+  Trophy,
 } from "lucide-react";
 
 interface UserAccountDropdownProps {
@@ -133,6 +134,15 @@ export const UserAccountDropdown = ({
             </Link>
           </DropdownMenuItem>
         )}
+
+        <DropdownMenuItem asChild>
+          <Link href='/badges' className='flex items-center group font-semibold text-[#3bb85e]'>
+            <div className="mr-2 p-1 rounded-md bg-gradient-to-br from-yellow-400 to-orange-500 group-hover:scale-110 transition-transform">
+                <Trophy className='w-3.5 h-3.5 text-white' />
+            </div>
+            <span>Badges & Rewards</span>
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

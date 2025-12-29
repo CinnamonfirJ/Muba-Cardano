@@ -26,6 +26,7 @@ import {
   Music,
   Camera,
   ChevronDown,
+  Trophy,
 } from "lucide-react";
 import Logo from "../../assets/logo.png";
 import { CartDropdown } from "../CartDropdown";
@@ -317,6 +318,17 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="space-y-2 mt-4 pt-4 border-gray-200 border-t">
+                <Link
+                  href="/badges"
+                  className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-md font-bold text-[#3bb85e] text-base"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="p-1 rounded bg-gradient-to-br from-yellow-400 to-orange-500">
+                    <Trophy className="w-4 h-4 text-white" />
+                  </div>
+                  Badges & Rewards
+                </Link>
+
                 <Link
                   href="/login"
                   className="block hover:bg-gray-50 px-3 py-2 rounded-md font-medium text-gray-700 hover:text-[#3bb85e] text-base"

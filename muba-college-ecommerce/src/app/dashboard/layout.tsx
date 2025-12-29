@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   ChevronDown,
   Package,
+  Trophy,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -104,6 +105,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       name: "Vendor Orders",
       href: "/dashboard/storefronts/orders",
       icon: Package,
+    });
+    sidebarItems.push({
+      name: "Badges",
+      href: "/badges",
+      icon: Trophy,
     });
   } else {
     sidebarItems.push({
