@@ -10,54 +10,40 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
 
+import { useQuery } from "@tanstack/react-query";
+import api from "@/services/api";
+
 interface Vendor {
   _id: string;
   name: string;
   img?: string;
   rating: number;
-  followers: number;
-  products: number;
+  followers: any[];
+  products: any[];
   verified: boolean;
 }
 
 export default function VendorsPage() {
   const { user } = useAuth();
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Using localStorage as temporary storage until backend is ready
-  useEffect(() => {
-    loadVendors();
-  }, [user]);
+  const { data: vendors = [], isLoading, refetch } = useQuery<Vendor[]>({
+    queryKey: ["followedVendors"],
+    queryFn: async () => {
+      const response = await api.get("/api/v1/stores/followed");
+      return response.data.data;
+    },
+    enabled: !!user?._id,
+  });
 
-  const loadVendors = () => {
-    try {
-      const saved = localStorage.getItem(`followed_vendors_${user?._id}`);
-      if (saved) {
-        setVendors(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error("Error loading vendors:", error);
-    }
-  };
-
-  const saveVendors = (newVendors: Vendor[]) => {
-    try {
-      localStorage.setItem(
-        `followed_vendors_${user?._id}`,
-        JSON.stringify(newVendors)
-      );
-      setVendors(newVendors);
-    } catch (error) {
-      console.error("Error saving vendors:", error);
-    }
-  };
-
-  const handleUnfollow = (vendorId: string) => {
+  const handleUnfollow = async (vendorId: string) => {
     if (window.confirm("Are you sure you want to unfollow this vendor?")) {
-      const filtered = vendors.filter((v) => v._id !== vendorId);
-      saveVendors(filtered);
+      try {
+        await api.post(`/api/v1/stores/${vendorId}/unfollow`);
+        refetch();
+      } catch (error) {
+        console.error("Error unfollowing vendor:", error);
+      }
     }
   };
 
@@ -107,7 +93,7 @@ export default function VendorsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vendors.reduce((sum, v) => sum + v.products, 0)}
+              {vendors.reduce((sum, v) => sum + (v.products?.length || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -158,12 +144,13 @@ export default function VendorsPage() {
                 <div className="space-y-4">
                   {/* Vendor Header */}
                   <div className="flex items-start gap-3">
-                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-gray-100 shrink-0">
+                    <Link href={`/store/${vendor._id}`} className="relative h-16 w-16 rounded-full overflow-hidden bg-gray-100 shrink-0 hover:opacity-80 transition-opacity">
                       {vendor.img ? (
                         <Image
                           src={vendor.img}
                           alt={vendor.name}
                           fill
+                          sizes="64px"
                           className="object-cover"
                         />
                       ) : (
@@ -171,9 +158,11 @@ export default function VendorsPage() {
                           <Store className="h-8 w-8 text-white" />
                         </div>
                       )}
-                    </div>
+                    </Link>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{vendor.name}</h3>
+                      <Link href={`/store/${vendor._id}`} className="hover:text-[#3bb85e] transition-colors">
+                        <h3 className="font-semibold truncate">{vendor.name}</h3>
+                      </Link>
                       <div className="flex items-center gap-2 text-sm">
                         <div className="flex items-center gap-1">
                           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -192,11 +181,11 @@ export default function VendorsPage() {
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Heart className="h-4 w-4" />
-                      <span>{vendor.followers} followers</span>
+                      <span>{vendor.followers?.length || 0} followers</span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Package className="h-4 w-4" />
-                      <span>{vendor.products} products</span>
+                      <span>{vendor.products?.length || 0} products</span>
                     </div>
                   </div>
 

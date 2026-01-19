@@ -1,4 +1,5 @@
-import bcrypt from "bcrypt";
+import bcryptPkg from "bcrypt";
+const bcrypt = bcryptPkg;
 
 export const hash = async (item: string) => {
     const rounds = 10;
@@ -9,3 +10,4 @@ export const hash = async (item: string) => {
 export const compare = async (item: string, hashedItem: string) => {
     return await bcrypt.compare(item, hashedItem);
 }
+

@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
-import Stores from "../../models/stores.model";
-import { deleteFromCloudinary } from "../../middlewares/upload.middleware";
+import express from "express";
+import type { Request, Response } from "express";
+import Stores from "../../models/stores.model.ts";
+import { deleteFromCloudinary } from "../../middlewares/upload.middleware.ts";
 
 export const DeleteStore = async (req: Request, res: Response) => {
   const { _id } = req.params;
@@ -37,3 +38,6 @@ export const DeleteStore = async (req: Request, res: Response) => {
     return res.status(500).json({ message: `Internal Server Error ${err}` });
   }
 };
+
+
+

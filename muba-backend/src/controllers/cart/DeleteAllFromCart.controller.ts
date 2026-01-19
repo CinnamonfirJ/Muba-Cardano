@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import Cart from "../../models/cart.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Cart from "../../models/cart.model.ts";
 
 export const DeleteAllFromCart = async (req: Request, res: Response) => {
   const { user_id } = req.body;
@@ -33,3 +34,6 @@ export const DeleteAllFromCart = async (req: Request, res: Response) => {
       });
   }
 };
+
+
+

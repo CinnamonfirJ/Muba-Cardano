@@ -1,4 +1,5 @@
-import { Schema, model, models } from "mongoose";
+import pkg from "mongoose";
+const { Schema, model, models } = pkg;
 
 const VendorOrderSchema = new Schema(
   {
@@ -35,7 +36,7 @@ const VendorOrderSchema = new Schema(
     ],
     delivery_option: {
       type: String,
-      enum: ["school_post", "self", "rider"],
+      enum: ["school_post", "self", "rider", "peer_to_peer"],
       default: "school_post",
     },
     delivery_fee: {
@@ -51,6 +52,36 @@ const VendorOrderSchema = new Schema(
       required: true,
       default: 0,
     },
+    platform_fee: {
+        type: Number,
+        default: 0
+    },
+    vendor_earnings: {
+        type: Number,
+        default: 0
+    },
+    // --- PAYSTACK SPLIT FIELDS ---
+    paystack_split_code: {
+        type: String, // SPLIT_xxxxxxxx
+    },
+    paystack_subaccount_code: {
+        type: String, // ACCT_xxxxxxxx (Snapshot of vendor subaccount at time of order)
+    },
+    
+    // --- DISPUTE FIELDS ---
+    dispute_status: {
+        type: String,
+        enum: ["none", "open", "resolved"],
+        default: "none"
+    },
+    active_dispute_id: {
+        type: Schema.Types.ObjectId,
+        ref: "Disputes"
+    },
+
+    // Old manual payout fields REMOVED
+    // payout_status, payout_requested_at, etc. are deprecated.
+    // We keep `vendor_earnings` and `platform_fee` for audit.
     // For third-party rider
     rider_info: {
       name: String,
@@ -80,7 +111,9 @@ const VendorOrderSchema = new Schema(
         "handed_to_post_office",
         "ready_for_pickup",
         "delivered",
-        "cancelled"
+        "cancelled",
+        "shipped",
+        "dispatched"
       ],
     },
   },

@@ -1,13 +1,35 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingBag, Star, Heart, Shield } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 import { ProfileCompletionBanner } from "@/components/ProfileCompletionBanner";
 
+import { useQuery } from "@tanstack/react-query";
+import api from "@/services/api";
+import { Loader2, ShoppingBag, Star, Heart, Shield } from "lucide-react";
+
 const DashboardOverview = () => {
   const { user } = useAuth();
+
+  const { data, isLoading } = useQuery<any>({
+    queryKey: ["customerAnalytics"],
+    queryFn: async () => {
+      const response = await api.get("/api/v1/analytics/customer");
+      return response.data.data;
+    },
+    enabled: !!user?._id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader2 className="w-6 h-6 animate-spin text-[#3bb85e]" />
+      </div>
+    );
+  }
+
+  const { orders, reviews, following } = data || {};
 
   return (
     <div className="space-y-6">
@@ -29,8 +51,8 @@ const DashboardOverview = () => {
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">12</div>
-              <p className="text-[10px] text-muted-foreground">+2 from last month</p>
+              <div className="text-xl font-bold">{orders?.total || 0}</div>
+              <p className="text-[10px] text-muted-foreground">{orders?.active || 0} Active Shipments</p>
             </CardContent>
           </Card>
 
@@ -41,8 +63,8 @@ const DashboardOverview = () => {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">8</div>
-              <p className="text-[10px] text-muted-foreground">+1 from last month</p>
+              <div className="text-xl font-bold">{reviews?.total || 0}</div>
+              <p className="text-[10px] text-muted-foreground">Thank you for sharing!</p>
             </CardContent>
           </Card>
 
@@ -53,8 +75,8 @@ const DashboardOverview = () => {
               <Heart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">5</div>
-              <p className="text-[10px] text-muted-foreground">+1 from last month</p>
+              <div className="text-xl font-bold">{following?.total || 0}</div>
+              <p className="text-[10px] text-muted-foreground">Favorite storefronts</p>
             </CardContent>
           </Card>
 

@@ -1,4 +1,5 @@
-import { Types } from "mongoose";
+import pkg from "mongoose";
+const { Types } = pkg;
 
 type RoleTypes = "user" | "vendor" | "admin" | "post_office" | "post_office_member";
 type VendorStatusTypes = "none" | "pending" | "accepted" | "rejected";
@@ -25,4 +26,7 @@ export interface UserTypes {
   postOfficeName?: string;
   postOfficeDocs?: string[];
   successful_deliveries?: number;
+  favorites?: Types.ObjectId[];
 }
+
+

@@ -8,14 +8,14 @@ import {
   GetAdminStats,
   GetUsersByRole,
   ToggleUserBan,
-} from "../controllers/admin/admin.controller";
+} from "../controllers/admin/admin.controller.ts";
 import { 
   GetPendingPostOfficeApplications, 
   ApprovePostOfficeApplication, 
   RejectPostOfficeApplication 
-} from "../controllers/admin/postOfficeAdmin.controller";
-// import { authenticateToken } from "../middleware/auth.middleware"; // Comment out if you don't have this
-// import { CheckAdmin } from "../middleware/checkAdmin.middleware";
+} from "../controllers/admin/postOfficeAdmin.controller.ts";
+// import { authenticateToken } from "../middleware/auth.middleware.ts"; // Comment out if you don't have this
+// import { CheckAdmin } from "../middleware/checkAdmin.middleware.ts";
 
 const router = express.Router();
 
@@ -58,3 +58,4 @@ router.patch("/post-office/:id/reject", RejectPostOfficeApplication);
 // router.patch("/users/:_id/ban", authenticateToken, CheckAdmin, ToggleUserBan);
 
 export default router;
+

@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../models/users.model";
-import Jwt from "jsonwebtoken";
-import { tokenConfig } from "../../config";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import User from "../models/users.model.ts";
+import jwtPkg from "jsonwebtoken";
+const Jwt = jwtPkg;
+import { tokenConfig } from "../../config/index.ts";
 
 export const CheckPostOffice = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.access_token;
@@ -49,3 +51,8 @@ export const CheckPostOffice = async (req: Request, res: Response, next: NextFun
         return res.status(500).json({ message: `Internal Server Error: ${err}`});
     }
 }
+
+
+
+
+

@@ -1,5 +1,6 @@
-import { model, models, Schema } from "mongoose";
-import { PaymentType } from "../dto/payment.dto";
+import pkg from "mongoose";
+const { model, models, Schema } = pkg;
+import type { PaymentType } from "../dto/payment.dto.ts";
 
 const PaymentSchema = new Schema<PaymentType>(
     {
@@ -45,3 +46,6 @@ const PaymentSchema = new Schema<PaymentType>(
 const Payments = models.Payments || model<PaymentType>("Payments", PaymentSchema);
 
 export default Payments;
+
+
+

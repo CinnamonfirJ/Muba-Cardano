@@ -1,8 +1,10 @@
-import { Request, Response } from "express";
-import Stores from "../../models/stores.model";
-import Users from "../../models/users.model";
-import { uploadToCloudinary } from "../../middlewares/upload.middleware";
+import express from "express";
+import type { Request, Response } from "express";
+import Stores from "../../models/stores.model.ts";
+import Users from "../../models/users.model.ts";
+import { uploadToCloudinary } from "../../middlewares/upload.middleware.ts";
 import mongoose from "mongoose";
+import { isValidMatricNumber } from "../../utils/validation.util.ts";
 
 export const EditStoreDetails = async (req: Request, res: Response) => {
   try {
@@ -18,6 +20,9 @@ export const EditStoreDetails = async (req: Request, res: Response) => {
       // returnPolicy,
       // warranty,
       existingImg,
+      settlement_bank,
+      account_number,
+      matric_number
     } = req.body;
 
     console.log("Edit store request body:", req.body);
@@ -130,6 +135,17 @@ export const EditStoreDetails = async (req: Request, res: Response) => {
     if (ownerId && ownerId !== existingStore.owner.toString())
       updateData.owner = ownerId;
 
+    if (settlement_bank) updateData.settlement_bank = settlement_bank;
+    if (account_number) updateData.account_number = account_number;
+
+    // Handle Matric Number Update for Owner
+    if (matric_number) {
+        if (!isValidMatricNumber(matric_number)) {
+            return res.status(400).json({ message: "Invalid Matriculation Number format." });
+        }
+        await Users.findByIdAndUpdate(ownerId, { matric_number: matric_number.toUpperCase() });
+    }
+
     // if (shippingPolicy !== undefined) updateData.shippingPolicy = shippingPolicy.trim();
     // if (returnPolicy !== undefined) updateData.returnPolicy = returnPolicy.trim();
     // if (warranty !== undefined) updateData.warranty = warranty.trim();
@@ -182,3 +198,6 @@ export const EditStoreDetails = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+

@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
-import Users from "../../models/users.model";
-import { hash, compare } from "../../utils/hash.utils";
+import express from "express";
+import type { Request, Response } from "express";
+import Users from "../../models/users.model.ts";
+import { hash, compare } from "../../utils/hash.utils.ts";
 
 export const ChangePassword = async (req: Request, res: Response) => {
   try {
@@ -29,3 +30,6 @@ export const ChangePassword = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
+

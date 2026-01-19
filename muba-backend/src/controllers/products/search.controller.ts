@@ -1,30 +1,35 @@
-import { Request, Response } from "express";
-import Products from "../../models/products.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Products from "../../models/products.model.ts";
+import { getEligibleStoreIds } from "../../utils/vendorGating.util.ts";
 
 export const SearchProducts = async (req: Request, res: Response) => {
   try {
     const { q, category, minPrice, maxPrice } = req.query;
 
-    // Build filter object
-    const filter: any = {};
+    // Build filter object with Marketplace Gating
+    const eligibleStoreIds = await getEligibleStoreIds();
+    const filter: any = { store: { $in: eligibleStoreIds } };
 
     if (q) {
       const searchQuery =
-        typeof q === "string" ? q : Array.isArray(q) ? q.join(" ") : ""; // fallback if q is an object
+        typeof q === "string" ? q : Array.isArray(q) ? q.join(" ") : ""; 
 
       const words = searchQuery.split(" ").filter(Boolean);
 
-      filter.$and = words.map((word: string) => {
-        const regex = { $regex: word, $options: "i" };
-        return {
-          $or: [
-            { name: regex },
-            { description: regex },
-            { category: regex },
-            { colors: regex },
-          ],
-        };
-      });
+      filter.$and = [
+        ...words.map((word: string) => {
+            const regex = { $regex: word, $options: "i" };
+            return {
+              $or: [
+                { name: regex },
+                { description: regex },
+                { category: regex },
+                { colors: regex },
+              ],
+            };
+        })
+      ];
     }
 
     if (category) {

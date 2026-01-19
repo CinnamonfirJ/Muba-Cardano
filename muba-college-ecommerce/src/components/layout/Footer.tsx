@@ -5,6 +5,7 @@ import Logo from "../../assets/logo.png";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import PromoBanner from "../../assets/campus_promo_banner.png";
 
 export default function Footer() {
   const { user } = useAuth();
@@ -15,7 +16,7 @@ export default function Footer() {
         <section
           className='relative'
           style={{
-            backgroundImage: `url('/src/assets/promo-banner.jpg')`,
+            backgroundImage: `url(${PromoBanner.src})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

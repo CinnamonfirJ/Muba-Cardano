@@ -73,6 +73,7 @@ export interface ProductFilters {
   limit?: number;
   sortBy?: "createdAt" | "price" | "rating" | "views";
   sortOrder?: "asc" | "desc";
+  rating?: number;
 }
 
 export const productService = {
@@ -209,6 +210,48 @@ export const productService = {
     const response = await api.post(`/api/v1/products/${id}/duplicate`);
     return response.data;
   },
+
+  // Reviews
+  async addProductReview(productId: string, data: { orderId: string, rating: number, review: string, images?: string[] }) {
+    const response = await api.post(`/api/v1/products/${productId}/review`, data);
+    return response.data;
+  },
+
+  async getProductReviews(productId: string, page = 1, limit = 10) {
+    const response = await api.get(`/api/v1/products/${productId}/reviews`, {
+        params: { page, limit }
+    });
+    return response.data;
+  },
+
+  async checkReviewEligibility(productId: string) {
+      const response = await api.get(`/api/v1/products/${productId}/review/eligibility`);
+      return response.data;
+  },
+
+  async uploadReviewImages(images: File[]) {
+      const formData = new FormData();
+      images.forEach((image) => {
+          formData.append("images", image);
+      });
+
+      const response = await api.post("/api/v1/upload/review-images", formData, {
+          headers: {
+              "Content-Type": "multipart/form-data",
+          },
+      });
+      return response.data;
+  },
+
+  async toggleLikeProduct(productId: string) {
+      const response = await api.post(`/api/v1/products/${productId}/like`);
+      return response.data;
+  },
+
+  async getFavorites() {
+      const response = await api.get("/api/v1/products/user/favorites");
+      return response.data;
+  }
 };
 
 export const ProductService = productService;

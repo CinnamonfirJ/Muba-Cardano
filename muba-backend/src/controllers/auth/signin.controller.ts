@@ -1,9 +1,12 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../../models/users.model";
-import bcrypt from "bcrypt";
-import Jwt from "jsonwebtoken";
-import { tokenConfig } from "../../../config";
-import { CustomErr } from "../../utils/errors.utils";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import User from "../../models/users.model.ts";
+import bcryptPkg from "bcrypt";
+const bcrypt = bcryptPkg;
+import jwtPkg from "jsonwebtoken";
+const Jwt = jwtPkg;
+import { tokenConfig } from "../../../config/index.ts";
+import { CustomErr } from "../../utils/errors.utils.ts";
 
 export const SignIn = async (
   req: Request,
@@ -74,3 +77,8 @@ export const SignIn = async (
     return next(err);
   }
 };
+
+
+
+
+

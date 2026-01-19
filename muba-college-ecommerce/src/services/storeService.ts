@@ -24,9 +24,14 @@ export interface Store {
   returnPolicy: string;
   warranty: string;
   lastActive: string;
-  isActive?: boolean; // Added for store status management
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+  settlement_bank?: string;
+  account_number?: string;
+  paystack_recipient_code?: string;
+  paystack_subaccount_code?: string;
+  bank_name?: string;
 }
 
 export interface StoreFilters {
@@ -59,12 +64,12 @@ export const storeService = {
     }
 
     const response = await api.get(`/api/v1/stores?${params.toString()}`);
-    return response.data.data; // Unwrapping data
+    return response.data.data;
   },
 
   async getStoreById(id: string) {
     const response = await api.get(`/api/v1/stores/${id}`);
-    return response.data.data; // Unwrapping data
+    return response.data.data;
   },
 
   async getStoreStats(id: string): Promise<StoreStats> {
@@ -72,7 +77,6 @@ export const storeService = {
       const response = await api.get(`/api/v1/stores/${id}/stats`);
       return response.data;
     } catch (error) {
-      // Fallback: return default stats if endpoint doesn't exist
       return {
         totalProducts: 0,
         activeProducts: 0,
@@ -115,7 +119,7 @@ export const storeService = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      timeout: 60000, // 60 seconds for file uploads
+      timeout: 60000,
     });
     return response.data;
   },
@@ -125,7 +129,7 @@ export const storeService = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      timeout: 60000, // 60 seconds for file uploads
+      timeout: 60000,
     });
     return response.data;
   },
@@ -162,7 +166,6 @@ export const storeService = {
     return response.data;
   },
 
-  // Additional methods for store management
   async getStoreDashboard(id: string) {
     const response = await api.get(`/api/v1/stores/${id}/dashboard`);
     return response.data;
@@ -170,25 +173,17 @@ export const storeService = {
 
   async getUserStores(userId: string) {
     const response = await api.get(`/api/v1/stores/user/${userId}`);
-    return response.data.data; // Unwrapping data
+    return response.data.data;
   },
 
   async getMyStores() {
-    const response = await api.get(`/api/v1/stores/user/me`); // Assuming this endpoint exists, or use getUserStores with current user ID if accessible.
-    // If backend doesn't have 'me' endpoint for stores, we should rely on passing userId to getUserStores.
-    // Given usage in useStores.ts: queryFn: () => storeService.getMyStores(),
-    // I'll implement it to call likely endpoint or return [];
-    // Better: let's use the same endpoint as getUserStores but we need the ID.
-    // Since this is a service, it doesn't know about auth context.
-    // I will assume /api/v1/stores/my-stores or similar exists, OR I will assume the user has to pass ID.
-    // Refactoring useStores.ts to use getUserStores(userId) is safer if 'me' endpoint is uncertain.
-    // But for now let's try /api/v1/stores/user/me if the backend supports it.
-    // Actually, looking at authService, we have getCurrentUser().
-    // So:
-    const userStr = localStorage.getItem("user_data");
-    const user = userStr ? JSON.parse(userStr) : null;
-    if (!user?._id) throw new Error("User not found");
-    return this.getUserStores(user._id);
+    const response = await api.get(`/api/v1/stores/user/me`);
+    return response.data.data;
+  },
+
+  async getVendorStore() {
+    const stores = await this.getMyStores();
+    return stores && stores.length > 0 ? stores[0] : null;
   },
 
   async getStoreAnalytics(
@@ -203,4 +198,5 @@ export const storeService = {
 };
 
 export const StoreService = storeService;
+export const getVendorStore = () => storeService.getVendorStore();
 export default storeService;

@@ -1,7 +1,8 @@
-import { NextFunction, Request, Response } from "express";
-import Stores from "../models/stores.model";
-import Products from "../models/products.model";
-import Users from "../models/users.model";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import Stores from "../models/stores.model.ts";
+import Products from "../models/products.model.ts";
+import Users from "../models/users.model.ts";
 
 export const VerifyProductOwner = async (req: Request, res: Response, next: NextFunction) => {
     const { _id } = req.params;
@@ -74,3 +75,5 @@ export const VerifyStoreOwner = async (req: Request, res: Response, next: NextFu
         return res.status(500).json({ message: `Internal Server Error ${err}`});
     }
 }
+
+

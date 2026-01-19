@@ -1,12 +1,18 @@
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 // controllers/request.controller.ts
-import { Request, Response } from "express";
-import Users from "../../models/users.model";
-import RequestVendor from "../../models/requestVendor.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Users from "../../models/users.model.ts";
+import RequestVendor from "../../models/requestVendor.model.ts";
 import fs from "node:fs";
 import path from "node:path";
-import { SendEmailTypes } from "../../dto/email.dto";
-import { SendEmail } from "../../utils/sendEmail.utils";
-import { uploadToCloudinary } from "../../middlewares/upload.middleware";
+import type { SendEmailTypes } from "../../dto/email.dto.ts";
+import { SendEmail } from "../../utils/sendEmail.utils.ts";
+import { uploadToCloudinary } from "../../middlewares/upload.middleware.ts";
+import { isValidMatricNumber } from "../../utils/validation.util.ts";
 
 export const RequestToBeVendor = async (req: Request, res: Response) => {
   try {
@@ -17,10 +23,16 @@ export const RequestToBeVendor = async (req: Request, res: Response) => {
     const cac = (req.files as any)?.cac?.[0];
 
     // Validation
-    if (!firstname || !email || !address || !valid_id || !picture) {
+    if (!firstname || !email || !address || !valid_id || !picture || !matric_number) {
       return res.status(400).json({
-        message: "Please Fill in Required Fields",
+        message: "Please Fill in Required Fields (including Matric Number)",
       });
+    }
+
+    if (!isValidMatricNumber(matric_number)) {
+        return res.status(400).json({
+            message: "Invalid Matriculation Number format. Expected format: U21CO1024"
+        });
     }
 
     // Check if user exists
@@ -103,21 +115,51 @@ export const RequestToBeVendor = async (req: Request, res: Response) => {
       { new: true, runValidators: true }
     );
 
-    // Send email to user (with error handling)
+    // Send emails
     try {
-      const template = fs.readFileSync(
-        path.join(__dirname, "../../emailTemplates/welcome.email.html"),
-        "utf-8"
-      );
-      const msg = template.replace("{{vendor_name}}", firstname);
-      const emailData: SendEmailTypes = {
+      // 1. Send confirmation to Applicant
+      const applicantTemplatePath = path.join(__dirname, "../../emailTemplates/vendorRequest.email.html");
+      const applicantTemplate = fs.readFileSync(applicantTemplatePath, "utf-8");
+      const applicantMsg = applicantTemplate.replace("{{vendor_name}}", firstname);
+      
+      const applicantEmailData: SendEmailTypes = {
         email,
-        title: `Vendor Request Submitted`,
-        html: msg,
+        title: "Vendor Application Received",
+        html: applicantMsg,
       };
-      await SendEmail(emailData);
+      await SendEmail(applicantEmailData);
+
+      // 2. Send notification to Admin
+      if (getAdmin && getAdmin.email) {
+        const adminTemplatePath = path.join(__dirname, "../../emailTemplates/vendorApplicationAdmin.email.html");
+        let adminMsg = fs.readFileSync(adminTemplatePath, "utf-8");
+
+        const cacSection = cac_url 
+          ? `<a href="${cac_url}" class="button">View CAC</a>`
+          : "";
+
+        adminMsg = adminMsg
+          .replace("{{firstname}}", firstname)
+          .replace("{{email}}", email)
+          .replace("{{matric_number}}", matric_number)
+          .replace("{{department}}", department || "N/A")
+          .replace("{{faculty}}", faculty || "N/A")
+          .replace("{{valid_id_url}}", valid_id_url)
+          .replace("{{picture_url}}", picture_url)
+          .replace("{{cac_section}}", cacSection);
+
+        const adminEmailData: SendEmailTypes = {
+          email: getAdmin.email,
+          title: "New Vendor Application Submitted",
+          html: adminMsg,
+        };
+        await SendEmail(adminEmailData);
+      } else {
+        console.error("Admin email not found, skipping admin notification");
+      }
+
     } catch (emailError) {
-      console.error("Failed to send user email:", emailError);
+      console.error("Failed to send emails:", emailError);
     }
 
     return res.status(201).json({

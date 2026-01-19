@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../models/users.model";
-import Jwt from "jsonwebtoken";
-import { tokenConfig } from "../../config";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import User from "../models/users.model.ts";
+import jwtPkg from "jsonwebtoken";
+const Jwt = jwtPkg;
+import { tokenConfig } from "../../config/index.ts";
 
 export const CheckAdmin = async (req: Request, res: Response, next: NextFunction) => {
     // const { owner } = req.body;
@@ -40,3 +42,7 @@ export const CheckAdmin = async (req: Request, res: Response, next: NextFunction
         return res.status(500).json({ message: `Internal Server Error: ${err}`});
     }
 }
+
+
+
+

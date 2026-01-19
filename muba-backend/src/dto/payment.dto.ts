@@ -1,4 +1,5 @@
-import { Types, Schema } from "mongoose";
+import pkg from "mongoose";
+const { Types, Schema } = pkg;
 
 export interface PaymentType {
     _id: string;
@@ -16,3 +17,4 @@ export interface PaymentType {
     transaction_date: Date
     // raw: any;
 }
+

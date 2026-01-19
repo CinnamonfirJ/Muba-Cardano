@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import Cart from "../../models/cart.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Cart from "../../models/cart.model.ts";
 
 export const GetUserCart = async (req: Request, res: Response) => {
     const { userId } = req.params;
@@ -61,3 +62,5 @@ export const GetUserCart = async (req: Request, res: Response) => {
         });
     }
 };
+
+

@@ -22,6 +22,9 @@ import {
   ChevronDown,
   Package,
   Trophy,
+  UserCheck,
+  Truck,
+  Banknote,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -79,9 +82,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       icon: Star,
     },
     {
+      name: "Favorites",
+      href: "/dashboard/favorites",
+      icon: Heart,
+    },
+    {
       name: "Vendors",
       href: "/dashboard/vendors",
-      icon: Heart,
+      icon: UserCheck,
     },
     {
       name: "Payment",
@@ -107,9 +115,25 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       icon: Package,
     });
     sidebarItems.push({
+      name: "Payouts",
+      href: "/dashboard/vendors/payouts",
+      icon: Banknote,
+    });
+    sidebarItems.push({
       name: "Badges",
       href: "/badges",
       icon: Trophy,
+    });
+  } else if (user.role === "post_office" || user.role === "post_office_member") {
+    sidebarItems.push({
+      name: "PO Dashboard",
+      href: "/dashboard/post-office",
+      icon: Truck,
+    });
+    sidebarItems.push({
+      name: "Scan Items",
+      href: "/dashboard/post-office/scan",
+      icon: Package,
     });
   } else {
     sidebarItems.push({

@@ -1,13 +1,14 @@
-import { Router } from "express";
-import { AddToCart } from "../controllers/cart/addToCart.controller";
-import { RemoveFromCart } from "../controllers/cart/removeFromCart.controller";
-import { decreaseQty } from "../controllers/cart/decreaceQty";
-import { increaseQty } from "../controllers/cart/increaseQty";
-import { GetUserCart } from "../controllers/cart/getCart";
-import { DeleteAllFromCart } from "../controllers/cart/DeleteAllFromCart.controller";
-import { updateQty } from "../controllers/cart/updateQty";
+import express from "express";
+import type { Router } from "express";
+import { AddToCart } from "../controllers/cart/addToCart.controller.ts";
+import { RemoveFromCart } from "../controllers/cart/removeFromCart.controller.ts";
+import { decreaseQty } from "../controllers/cart/decreaceQty.ts";
+import { increaseQty } from "../controllers/cart/increaseQty.ts";
+import { GetUserCart } from "../controllers/cart/getCart.ts";
+import { DeleteAllFromCart } from "../controllers/cart/DeleteAllFromCart.controller.ts";
+import { updateQty } from "../controllers/cart/updateQty.ts";
 
-const router = Router();
+const router = express.Router();
 
 router.route("/").post(AddToCart);
 
@@ -26,3 +27,6 @@ router.route("/:_id/increase").patch(increaseQty);
 router.route("/:_id/decrease").patch(decreaseQty);
 
 export default router;
+
+
+

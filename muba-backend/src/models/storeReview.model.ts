@@ -1,4 +1,5 @@
-import { model, models, Schema } from "mongoose";
+import pkg from "mongoose";
+const { model, models, Schema } = pkg;
 
 const StoreReviewSchema = new Schema(
   {
@@ -30,3 +31,5 @@ const StoreReview =
   models.StoreReview || model("StoreReview", StoreReviewSchema);
 
 export default StoreReview;
+
+

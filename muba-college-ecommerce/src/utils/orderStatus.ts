@@ -9,6 +9,8 @@ export const ORDER_STATUSES = {
   ORDER_CONFIRMED: "order_confirmed",
   HANDED_TO_POST_OFFICE: "handed_to_post_office",
   READY_FOR_PICKUP: "ready_for_pickup",
+  SHIPPED: "shipped",
+  DISPATCHED: "dispatched",
   DELIVERED: "delivered",
   CANCELLED: "cancelled",
 } as const;
@@ -25,6 +27,10 @@ export const getStatusLabel = (status: string): string => {
       return "Handed to Post Office";
     case ORDER_STATUSES.READY_FOR_PICKUP:
       return "Ready for Pickup";
+    case ORDER_STATUSES.SHIPPED:
+      return "Shipped";
+    case ORDER_STATUSES.DISPATCHED:
+      return "Dispatched";
     case ORDER_STATUSES.DELIVERED:
       return "Delivered";
     case ORDER_STATUSES.CANCELLED:
@@ -49,6 +55,9 @@ export const getStatusBadgeClass = (status: string): string => {
       return `${baseClass} bg-purple-100 text-purple-800`;
     case ORDER_STATUSES.READY_FOR_PICKUP:
       return `${baseClass} bg-orange-100 text-orange-800`;
+    case ORDER_STATUSES.SHIPPED:
+    case ORDER_STATUSES.DISPATCHED:
+      return `${baseClass} bg-indigo-100 text-indigo-800`;
     case ORDER_STATUSES.DELIVERED:
     case "delivered":
       return `${baseClass} bg-green-100 text-green-800`;

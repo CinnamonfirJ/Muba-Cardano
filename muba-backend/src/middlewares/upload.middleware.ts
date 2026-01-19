@@ -1,11 +1,5 @@
-// import multer from "multer";
-
-// const storage = multer.memoryStorage(); // keeps files in memory for Cloudinary
-// export const upload = multer({ storage });
-
-// middleware/upload.middleware.ts
-
-import multer from "multer";
+import multerPkg from "multer";
+const multer = multerPkg;
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary (this is the only config needed)

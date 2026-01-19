@@ -1,8 +1,9 @@
-import { Request, Response } from "express";
-import Products from "../../models/products.model";
-import Stores from "../../models/stores.model";
-import Users from "../../models/users.model";
-import { uploadToCloudinary } from "../../middlewares/upload.middleware";
+import express from "express";
+import type { Request, Response } from "express";
+import Products from "../../models/products.model.ts";
+import Stores from "../../models/stores.model.ts";
+import Users from "../../models/users.model.ts";
+import { uploadToCloudinary } from "../../middlewares/upload.middleware.ts";
 import mongoose from "mongoose";
 
 export const EditProduct = async (req: Request, res: Response) => {
@@ -274,3 +275,6 @@ export const EditProduct = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+

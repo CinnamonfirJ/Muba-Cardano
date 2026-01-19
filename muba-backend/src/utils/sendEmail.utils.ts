@@ -1,14 +1,19 @@
-import { emailConfig } from "../../config";
-import { SendEmailTypes } from "../dto/email.dto";
+import { emailConfig } from "../../config/index.ts";
+import type { SendEmailTypes } from "../dto/email.dto.ts";
 import nodemailer from "nodemailer"
 
 export const SendEmail = async ({ email, title, html }: SendEmailTypes) => {
     const transporter = nodemailer.createTransport({
         service: "gmail",
+        port: 587,               // REQUIRED
+        secure: false,
         auth: {
             user: emailConfig.email,
             pass: emailConfig.pass
-        }
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
     });
 
     const mailOptions = {
@@ -25,3 +30,6 @@ export const SendEmail = async ({ email, title, html }: SendEmailTypes) => {
         return err
     }
 }
+
+
+

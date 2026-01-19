@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { Store, Upload, FileText, CheckCircle, Loader2 } from "lucide-react";
+import { Store, Upload, FileText, CheckCircle, Loader2, User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { vendorService, type VendorApplicationData } from "@/services/vendorService";
+import toast from "react-hot-toast";
 
 type ApplicationStatus = "none" | "pending" | "accepted" | "rejected";
 
@@ -19,22 +21,25 @@ export default function BecomeVendorPage() {
   const [error, setError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  // Initialize form with user data where available
   const [formData, setFormData] = useState({
-    businessName: "",
-    businessDescription: "",
+    firstname: user?.firstname || "",
+    email: user?.email || "",
     businessAddress: "",
-    businessPhone: "",
-    businessEmail: user?.email || "",
+    matricNumber: "",
+    department: "",
+    faculty: "",
     idDocument: null as File | null,
     businessDocument: null as File | null,
+    picture: null as File | null,
   });
 
-  // Get application status from user object or localStorage
+  // Get application status from user object
   const applicationStatus: ApplicationStatus = user?.vendorStatus || "none";
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "idDocument" | "businessDocument"
+    field: "idDocument" | "businessDocument" | "picture"
   ) => {
     if (e.target.files && e.target.files[0]) {
       setFormData({ ...formData, [field]: e.target.files[0] });
@@ -49,27 +54,42 @@ export default function BecomeVendorPage() {
       return;
     }
 
+    if (!formData.idDocument || !formData.picture) {
+        setError("Please upload both your Valid ID and a Profile Picture");
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      // TODO: Submit to backend when available
-      // For now, update local state
-      updateUser({
-        ...user!,
-        vendorStatus: "pending",
-      });
+        const applicationData: VendorApplicationData = {
+            firstname: formData.firstname,
+            email: formData.email,
+            address: formData.businessAddress,
+            matric_number: formData.matricNumber,
+            department: formData.department,
+            faculty: formData.faculty,
+            valid_id: formData.idDocument,
+            picture: formData.picture,
+            cac: formData.businessDocument || undefined
+        };
 
-      // Store application data in localStorage
-      localStorage.setItem(
-        `vendor_application_${user?._id}`,
-        JSON.stringify({
-          ...formData,
-          submittedAt: new Date().toISOString(),
-        })
-      );
+        await vendorService.submitApplication(applicationData);
+
+        // Update local user state
+        if (user) {
+            updateUser({
+                vendorStatus: "pending",
+            });
+        }
+        
+        toast.success("Application submitted successfully!");
+
     } catch (err: any) {
-      setError(err.message || "Failed to submit application");
+        console.error("Application error:", err);
+      setError(err.response?.data?.message || err.message || "Failed to submit application");
+      toast.error(err.response?.data?.message || "Failed to submit application");
     } finally {
       setIsLoading(false);
     }
@@ -221,63 +241,73 @@ export default function BecomeVendorPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Personal Information Section */}
+            <div className="space-y-4">
+                <h3 className="font-medium flex items-center gap-2">
+                    <UserIcon className="h-4 w-4" />
+                    Personal & Academic Information
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="firstname">Full Name</Label>
+                        <Input
+                            id="firstname"
+                            value={formData.firstname}
+                            onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            value={formData.email}
+                            disabled
+                            className="bg-gray-100"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="matricNumber">Matric Number</Label>
+                        <Input
+                            id="matricNumber"
+                            placeholder="e.g. U21CO1024"
+                            value={formData.matricNumber}
+                            onChange={(e) => setFormData({ ...formData, matricNumber: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="faculty">Faculty</Label>
+                        <Input
+                            id="faculty"
+                            value={formData.faculty}
+                            onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="department">Department</Label>
+                        <Input
+                            id="department"
+                            value={formData.department}
+                            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                            required
+                        />
+                    </div>
+                </div>
+            </div>
+
             <div className="space-y-4">
               <h3 className="font-medium">Business Information</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="businessName">Business/Store Name *</Label>
-                <Input
-                  id="businessName"
-                  value={formData.businessName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, businessName: e.target.value })
-                  }
-                  required
-                />
-              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="businessDescription">Business Description *</Label>
-                <Textarea
-                  id="businessDescription"
-                  value={formData.businessDescription}
-                  onChange={(e) =>
-                    setFormData({ ...formData, businessDescription: e.target.value })
-                  }
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="businessPhone">Business Phone *</Label>
-                  <Input
-                    id="businessPhone"
-                    type="tel"
-                    value={formData.businessPhone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, businessPhone: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="businessEmail">Business Email *</Label>
-                  <Input
-                    id="businessEmail"
-                    type="email"
-                    value={formData.businessEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, businessEmail: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessAddress">Business Address *</Label>
+                <Label htmlFor="businessAddress">Business Address (Campus/Hostel Address) *</Label>
                 <Input
                   id="businessAddress"
                   value={formData.businessAddress}
@@ -290,20 +320,36 @@ export default function BecomeVendorPage() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="font-medium">Required Documents</h3>
+              <h3 className="font-medium">Required Documents & Photos</h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="idDocument">Valid ID Document *</Label>
-                <Input
-                  id="idDocument"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => handleFileChange(e, "idDocument")}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Student ID, National ID, or Driver's License
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="idDocument">Valid ID Document *</Label>
+                    <Input
+                    id="idDocument"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => handleFileChange(e, "idDocument")}
+                    required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                    Student ID, National ID, or Driver's License
+                    </p>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="picture">Profile Picture *</Label>
+                    <Input
+                    id="picture"
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={(e) => handleFileChange(e, "picture")}
+                    required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                    A clear photo of yourself for your vendor profile
+                    </p>
+                </div>
               </div>
 
               <div className="space-y-2">

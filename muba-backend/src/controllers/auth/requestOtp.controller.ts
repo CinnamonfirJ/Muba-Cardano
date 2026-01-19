@@ -1,12 +1,17 @@
-import { Request, Response } from "express";
-import Users from "../../models/users.model";
-import { getOtp } from "../../utils/genOtp.urils";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import express from "express";
+import type { Request, Response } from "express";
+import Users from "../../models/users.model.ts";
+import { getOtp } from "../../utils/genOtp.urils.ts";
 import fs from "node:fs";
 import path from "node:path";
-import { SendEmailTypes } from "../../dto/email.dto";
-import { SendEmail } from "../../utils/sendEmail.utils";
-import { hash } from "../../utils/hash.utils";
-import { validateOtp } from "../../utils/validateOtp.utils";
+import type { SendEmailTypes } from "../../dto/email.dto.ts";
+import { SendEmail } from "../../utils/sendEmail.utils.ts";
+import { hash } from "../../utils/hash.utils.ts";
+import { validateOtp } from "../../utils/validateOtp.utils.ts";
 
 export const RequestOtp = async (req: Request, res: Response) => {
     try {
@@ -50,3 +55,7 @@ export const RequestOtp = async (req: Request, res: Response) => {
         return res.status(500).json({ error: `Internal Server Error`})
     }
 }
+
+
+
+

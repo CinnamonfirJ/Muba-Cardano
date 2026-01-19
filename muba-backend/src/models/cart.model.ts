@@ -1,5 +1,6 @@
-import { model, models, Schema } from "mongoose";
-import { CartTypes } from "../dto/products.dto";
+import pkg from "mongoose";
+const { model, models, Schema } = pkg;
+import type { CartTypes } from "../dto/products.dto.ts";
 
 const CartSchema = new Schema<CartTypes>({
     product_id: {
@@ -48,3 +49,7 @@ const CartSchema = new Schema<CartTypes>({
 const Cart = models.Cart || model<CartTypes>("Cart", CartSchema);
 
 export default Cart;
+
+
+
+

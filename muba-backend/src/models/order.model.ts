@@ -1,4 +1,5 @@
-import { Schema, model, models } from "mongoose";
+import pkg from "mongoose";
+const { Schema, model, models } = pkg;
 
 const OrderSchema = new Schema(
   {
@@ -42,3 +43,5 @@ const OrderSchema = new Schema(
 const Orders = models.Orders || model("Orders", OrderSchema);
 
 export default Orders;
+
+

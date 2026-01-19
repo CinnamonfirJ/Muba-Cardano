@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../models/users.model";
-import Jwt from "jsonwebtoken";
-import { tokenConfig } from "../../config";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import User from "../models/users.model.ts";
+import jwtPkg from "jsonwebtoken";
+const Jwt = jwtPkg;
+import { tokenConfig } from "../../config/index.ts";
 
 export const AuthMiddleware = async (
   req: Request,
@@ -41,3 +43,8 @@ export const AuthMiddleware = async (
     return res.status(401).json({ message: "Unauthorized: Invalid or expired token" });
   }
 };
+
+
+
+
+

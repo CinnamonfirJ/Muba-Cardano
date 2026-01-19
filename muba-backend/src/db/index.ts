@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import { dbConfig } from "../../config"
+import { dbConfig } from "../../config/index.ts"
 
 export const dbConn = async () => {
     try {

@@ -97,7 +97,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const variantKey =
         Object.keys(variants).length > 0 ? JSON.stringify(variants) : "default";
 
-      const existingItem = state.items.find((item) => {
+      const existingItem = state.items.find((item: CartItem) => {
         const existingVariantKey =
           item.selectedVariants && Object.keys(item.selectedVariants).length > 0
             ? JSON.stringify(item.selectedVariants)
@@ -109,7 +109,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
       let newItems;
       if (existingItem) {
-        newItems = state.items.map((item) => {
+        newItems = state.items.map((item: CartItem) => {
           const existingVariantKey =
             item.selectedVariants &&
             Object.keys(item.selectedVariants).length > 0
@@ -138,7 +138,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case "REMOVE_ITEM": {
       const newItems = state.items.filter(
-        (item) => item.product._id !== action.payload
+        (item: CartItem) => item.product._id !== action.payload
       );
       const totals = calculateTotals(newItems);
       return { ...state, items: newItems, ...totals };
@@ -146,19 +146,19 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case "UPDATE_QUANTITY": {
       const newItems = state.items
-        .map((item) =>
+        .map((item: CartItem) =>
           item.product._id === action.payload.id
             ? { ...item, quantity: Math.max(0, action.payload.quantity) }
             : item
         )
-        .filter((item) => item.quantity > 0);
+        .filter((item: CartItem) => item.quantity > 0);
 
       const totals = calculateTotals(newItems);
       return { ...state, items: newItems, ...totals };
     }
 
     case "UPDATE_VARIANTS": {
-      const newItems = state.items.map((item) =>
+      const newItems = state.items.map((item: CartItem) =>
         item.product._id === action.payload.id
           ? { ...item, selectedVariants: action.payload.variants }
           : item
@@ -169,6 +169,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
 
     case "CLEAR_CART":
+      // Note: We allow clearing even if locked because verification page might call it.
       return { ...initialState };
 
     case "LOAD_CART":
@@ -198,13 +199,13 @@ const saveToLocalStorage = (items: CartItem[]) => {
   }
 };
 
-const loadFromLocalStorage = (): CartItem[] | null => {
+const loadFromLocalStorage = (): { items: CartItem[] | null } => {
   try {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
     const timestamp = localStorage.getItem(CART_TIMESTAMP_KEY);
 
     if (!savedCart || !timestamp) {
-      return null;
+      return { items: null };
     }
 
     // Check if cart has expired (30 days)
@@ -218,14 +219,16 @@ const loadFromLocalStorage = (): CartItem[] | null => {
       localStorage.removeItem(CART_STORAGE_KEY);
       localStorage.removeItem(CART_TIMESTAMP_KEY);
       console.log("Cart expired after 30 days");
-      return null;
+      return { items: null };
     }
 
     const cartItems = JSON.parse(savedCart);
-    return Array.isArray(cartItems) ? cartItems : null;
+    return { 
+      items: Array.isArray(cartItems) ? cartItems : null
+    };
   } catch (error) {
     console.error("Error loading cart from localStorage:", error);
-    return null;
+    return { items: null };
   }
 };
 
@@ -269,6 +272,7 @@ interface CartContextType {
     productId: string,
     variants?: { [key: string]: string }
   ) => number;
+  dispatch: React.Dispatch<CartAction>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -294,7 +298,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       dispatch({ type: "SET_LOADING", payload: true });
 
       // First, load from localStorage
-      const localCart = loadFromLocalStorage();
+      const { items: localCart } = loadFromLocalStorage();
 
       if (isAuthenticated && user) {
         try {
@@ -376,7 +380,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     initializeCart();
   }, [isAuthenticated, user]);
 
-  // Save to localStorage whenever cart changes
   useEffect(() => {
     if (state.items.length >= 0 && !state.loading) {
       saveToLocalStorage(state.items);
@@ -390,7 +393,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       dispatch({ type: "SET_SYNCING", payload: true });
 
       // Sync each item to backend
-      for (const item of state.items) {
+      for (const item of state.items as CartItem[]) {
         if (!item._id) {
           // Only sync items that aren't already in backend
           try {
@@ -493,12 +496,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const alreadyInCart = async (productId: string): Promise<boolean> => {
-    const item = state.items.find((i) => i.product._id === productId);
+    const item = state.items.find((i: CartItem) => i.product._id === productId);
     return !!item;
   };
 
   const removeItem = async (productId: string) => {
-    const item = state.items.find((i) => i.product._id === productId);
+    const item = state.items.find((i: CartItem) => i.product._id === productId);
 
     // Remove from local state immediately
     dispatch({ type: "REMOVE_ITEM", payload: productId });
@@ -577,7 +580,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         ? JSON.stringify(variants)
         : "default";
 
-    return state.items.some((item) => {
+    return state.items.some((item: CartItem) => {
       const existingVariantKey =
         item.selectedVariants && Object.keys(item.selectedVariants).length > 0
           ? JSON.stringify(item.selectedVariants)
@@ -597,7 +600,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         ? JSON.stringify(variants)
         : "default";
 
-    return state.items.reduce((count, item) => {
+    return state.items.reduce((count: number, item: CartItem) => {
       const existingVariantKey =
         item.selectedVariants && Object.keys(item.selectedVariants).length > 0
           ? JSON.stringify(item.selectedVariants)
@@ -619,7 +622,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         ? JSON.stringify(variants)
         : "default";
 
-    const item = state.items.find((item) => {
+    const item = state.items.find((item: CartItem) => {
       const existingVariantKey =
         item.selectedVariants && Object.keys(item.selectedVariants).length > 0
           ? JSON.stringify(item.selectedVariants)
@@ -646,6 +649,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     isItemInCart,
     getItemCountInCart,
     getItemQuantity,
+    dispatch,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

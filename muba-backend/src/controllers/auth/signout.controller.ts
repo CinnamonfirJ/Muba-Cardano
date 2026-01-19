@@ -1,6 +1,7 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../../models/users.model";
-import { CustomErr } from "../../utils/errors.utils";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import User from "../../models/users.model.ts";
+import { CustomErr } from "../../utils/errors.utils.ts";
 
 export const SignOut = async (
   req: Request,
@@ -38,3 +39,6 @@ export const SignOut = async (
     return next(err);
   }
 };
+
+
+

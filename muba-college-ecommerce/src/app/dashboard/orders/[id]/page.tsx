@@ -6,17 +6,21 @@ import { orderService } from "@/services/orderService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Truck, CreditCard, Calendar, ShoppingBag, MapPin, Clock, CheckCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Truck, CreditCard, Calendar, ShoppingBag, MapPin, Clock, CheckCircle, ShieldAlert, PackageIcon, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import OrderQR from "@/components/OrderQR";
+import { useState } from "react";
+import DisputeModal from "@/components/DisputeModal";
 
 export default function OrderDetailsPage() {
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  const { data: orderResponse, isLoading, error } = useQuery({
+  const { data: orderResponse, isLoading, error, refetch } = useQuery({
     queryKey: ["order", id],
     queryFn: () => orderService.getOrderById(id),
     enabled: !!id,
@@ -196,7 +200,7 @@ export default function OrderDetailsPage() {
                                         <div className="bg-gray-100 p-1 rounded-md">
                                             <PackageIcon className="w-3 h-3" />
                                         </div>
-                                        Seller ID: {typeof order.vendor_id === 'string' ? order.vendor_id.slice(-6) : (order.vendor_id?._id || 'Standard Vendor').slice(-6)}
+                                        Seller ID: {(order.vendor_id?._id || order.vendor_id || 'Standard Vendor').toString().slice(-6)}
                                     </div>
                                 </div>
                             </div>
@@ -237,27 +241,18 @@ export default function OrderDetailsPage() {
         </div>
 
         <div className="space-y-6 lg:col-span-4">
-            {/* QR Code Section - Enhanced */}
+            {/* QR Code Section */}
             {(order.refId || order.client_qr_code) && 
              (order.delivery_option === "school_post" || order.is_pickup_order) && 
              ["handed_to_post_office", "ready_for_pickup", "order_confirmed"].includes(order.status) && (
               <Card className={`rounded-3xl border-2 ${order.status === 'ready_for_pickup' ? 'border-[#3bb85e] bg-[#3bb85e]/5' : 'border-blue-200 bg-blue-50/50'} shadow-lg overflow-hidden relative`}>
-                {order.status === 'ready_for_pickup' && (
-                    <div className="absolute top-0 right-0 bg-[#3bb85e] text-white text-[8px] font-black px-4 py-1 rounded-bl-xl uppercase tracking-widest animate-pulse z-10">
-                        Ready Now
-                    </div>
-                )}
                 <CardHeader className="pb-2">
                   <CardTitle className={`${order.status === 'ready_for_pickup' ? 'text-[#3bb85e]' : 'text-blue-800'} flex items-center gap-2 text-base font-bold uppercase tracking-widest`}>
-                    <Truck className={`w-5 h-5 ${order.status === 'ready_for_pickup' ? 'animate-bounce' : ''}`} />
+                    <Truck className="w-5 h-5" />
                     Pickup Ticket
                   </CardTitle>
-                  <p className={`${order.status === 'ready_for_pickup' ? 'text-[#3bb85e]/70' : 'text-blue-600'} text-xs font-medium`}>
-                    {order.status === 'ready_for_pickup' ? 'Package is at Post Office' : 'Wait for Post Office arrival'}
-                  </p>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center pb-8 pt-4 bg-white m-4 rounded-2xl shadow-inner border border-gray-50">
-                  <div className="relative group p-4 bg-white rounded-xl">
                     <OrderQR 
                         refId={order.refId}
                         qrCodeValue={order.client_qr_code || `${order.refId}-C`}
@@ -265,20 +260,12 @@ export default function OrderDetailsPage() {
                         deliveryType="school_post"
                         action="pickup"
                         size={180}
-                        className="transition-transform group-hover:scale-105 duration-300"
                     />
-                  </div>
-                  <Alert className="mt-4 bg-gray-50 border-none rounded-xl">
-                    <Info className="w-4 h-4 text-gray-400" />
-                    <AlertDescription className="text-[10px] font-bold text-gray-500 leading-snug">
-                       Present this to the Post Office agent for verification.
-                    </AlertDescription>
-                  </Alert>
                 </CardContent>
               </Card>
             )}
 
-            {/* Delivery Info */}
+            {/* Shipping Info */}
             <Card className="rounded-3xl border-none bg-white/60 backdrop-blur-md shadow-sm">
                 <CardHeader>
                      <CardTitle className="flex items-center gap-2 text-base font-bold font-mona text-gray-800">
@@ -298,85 +285,101 @@ export default function OrderDetailsPage() {
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{order.delivery_option?.replace(/_/g, " ") || "Standard"}</p>
                         </div>
                     </div>
-
                     <div className="space-y-4 px-2">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Primary Contact</p>
                             <p className="text-sm font-bold text-gray-700">{order.shipping_info?.phone || order.user_id?.phone || 'Not provided'}</p>
                         </div>
-                        
                         <div className="space-y-1 border-t pt-3 border-gray-100/50">
                             <p className="text-[10px] font-black text-[#3bb85e] uppercase tracking-[0.2em]">Drop-off Location</p>
-                            <div className="flex gap-2 items-start mt-1">
-                                <div className="mt-1 bg-[#3bb85e]/10 p-1 rounded-md">
-                                    <MapPin className="w-3 h-3 text-[#3bb85e]" />
-                                </div>
-                                <p className="text-sm font-bold text-gray-700 leading-relaxed italic">
-                                    "{order.shipping_info?.address || order.user_id?.delivery_location || 'Campus Hub'}"
-                                </p>
-                            </div>
+                            <p className="text-sm font-bold text-gray-700 leading-relaxed italic">
+                                "{order.shipping_info?.address || order.user_id?.delivery_location || 'Campus Hub'}"
+                            </p>
                         </div>
-
-                        {order.delivery_option === "school_post" && (
-                            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex items-start gap-3 mt-4">
-                                <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                                <div className="space-y-1">
-                                    <p className="text-[11px] font-black text-blue-700 uppercase tracking-widest">Post Office Order</p>
-                                    <p className="text-[10px] font-bold text-blue-600/80 leading-snug">
-                                        Your package will be securely stored at the campus post office. Use the ticket above for pickup.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Payment Actions for Unpaid Orders */}
+            {order.status === "pending_payment" && (
+                <Card className="rounded-3xl border-2 border-red-100 bg-red-50/50 shadow-sm overflow-hidden p-6 text-center">
+                    <ShieldAlert className="w-10 h-10 text-red-500 mx-auto mb-2" />
+                    <h3 className="font-bold text-red-800 uppercase text-xs tracking-widest mb-1">Payment Required</h3>
+                    <p className="text-[10px] text-red-600 mb-4 font-medium italic">
+                        This order is currently a pending commitment. Pay now to secure your items or delete them to unlock your cart.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                        <Button 
+                            className="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold"
+                            onClick={() => router.push(`/payment/verify/${order.payment_reference}`)}
+                        >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Retry Payment
+                        </Button>
+                        <Button 
+                            variant="ghost"
+                            className="w-full rounded-xl text-red-600 hover:bg-red-50 font-bold"
+                            onClick={async () => {
+                                if (!confirm("Are you sure you want to cancel this pending commitment?")) return;
+                                try {
+                                    await orderService.deleteOrder(order._id);
+                                    toast.success("Order deleted");
+                                    router.push("/dashboard/orders");
+                                } catch (err: any) {
+                                    toast.error(err.message || "Failed to delete order");
+                                }
+                            }}
+                        >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Order
+                        </Button>
+                    </div>
+                </Card>
+            )}
+
+            {/* Dispute Section */}
+            <div className="space-y-4">
+                {order.dispute_status && order.dispute_status !== 'none' ? (
+                    <Card className="rounded-3xl border-2 border-red-100 bg-red-50/50 shadow-sm overflow-hidden text-center p-6">
+                        <ShieldAlert className="w-10 h-10 text-red-500 mx-auto mb-2" />
+                        <h3 className="font-bold text-red-800 uppercase text-xs tracking-widest mb-1">Dispute Active</h3>
+                        <p className="text-[10px] text-red-600 mb-4">Under Review by Admin</p>
+                        <Button className="w-full rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold" onClick={() => router.push(`/dashboard/disputes/${order.active_dispute_id?._id || order.active_dispute_id}`)}>
+                            Track Dispute
+                        </Button>
+                    </Card>
+                ) : order.status === 'delivered' && (
+                    <Button 
+                        variant="ghost" 
+                        className="w-full rounded-2xl text-red-500 hover:text-red-600 hover:bg-red-50 font-bold py-6 border border-dashed border-red-200"
+                        onClick={() => setShowDisputeModal(true)}
+                    >
+                        <ShieldAlert className="w-5 h-5 mr-2" />
+                        Report an Issue
+                    </Button>
+                )}
+            </div>
         </div>
       </div>
+
+      <DisputeModal 
+        isOpen={showDisputeModal} 
+        onClose={() => setShowDisputeModal(false)}
+        vendorOrderId={order._id}
+        onSuccess={() => {
+            setShowDisputeModal(false);
+            refetch();
+        }}
+      />
     </div>
   );
 }
 
-// Missing icons
 function Info(props: any) {
   return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
+      <path d="M12 16v-4" /><path d="M12 8h.01" />
     </svg>
   );
-}
-
-function PackageIcon(props: any) {
-    return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M16.5 9.4 7.5 4.21" />
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-        <polyline points="3.29 7 12 12 20.71 7" />
-        <line x1="12" y1="22" x2="12" y2="12" />
-      </svg>
-    )
 }

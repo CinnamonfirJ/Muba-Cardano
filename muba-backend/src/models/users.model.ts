@@ -1,5 +1,6 @@
-import { model, models, Schema } from "mongoose";
-import { UserTypes } from "../dto/users.dto";
+import pkg from "mongoose";
+const { model, models, Schema } = pkg;
+import type { UserTypes } from "../dto/users.dto.ts";
 
 const UserSchema = new Schema<UserTypes>(
   {
@@ -92,6 +93,12 @@ const UserSchema = new Schema<UserTypes>(
         type: String,
       },
     ],
+    favorites: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Products",
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -99,3 +106,7 @@ const UserSchema = new Schema<UserTypes>(
 const Users = models.Users || model<UserTypes>("Users", UserSchema);
 
 export default Users;
+
+
+
+

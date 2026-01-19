@@ -17,11 +17,20 @@ import {
   Settings,
   BarChart3,
   Loader2,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { storeService, type Store as StoreType } from "@/services/storeService";
-import { authService } from "@/services/authService";
 import { useAuth } from "@/context/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/services/api";
+
+const formatNaira = (amount: number) => {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+  }).format(amount);
+};
 
 const StorefrontsPage = () => {
   const { user } = useAuth();
@@ -30,6 +39,26 @@ const StorefrontsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch Vendor Analytics
+  const { data: analytics, isLoading: isAnalyticsLoading } = useQuery<any>({
+    queryKey: ["vendorAnalytics"],
+    queryFn: async () => {
+      const response = await api.get("/api/v1/analytics/vendor");
+      return response.data.data;
+    },
+    enabled: !!user?._id,
+  });
+
+  // Fetch Vendor Reviews
+  const { data: reviews = [], isLoading: isReviewsLoading } = useQuery<any[]>({
+    queryKey: ["vendorReviews"],
+    queryFn: async () => {
+      const response = await api.get("/api/v1/analytics/vendor/reviews");
+      return response.data.data;
+    },
+    enabled: !!user?._id,
+  });
 
   // Fetch stores on component mount
   useEffect(() => {
@@ -98,22 +127,6 @@ const StorefrontsPage = () => {
 
   // Calculate stats from real data
   const totalStores = stores.length;
-  const totalProducts = stores.reduce(
-    (sum, store) => sum + (store.products?.length || 0),
-    0
-  );
-  const totalFollowers = stores.reduce(
-    (sum, store) => sum + (store.followers?.length || 0),
-    0
-  );
-  const averageRating =
-    stores.length > 0
-      ? (
-          stores.reduce((sum, store) => sum + (store.rating || 0), 0) /
-          stores.length
-        ).toFixed(1)
-      : "0.0";
-
   // Format date helper
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -130,6 +143,8 @@ const StorefrontsPage = () => {
     );
   }
 
+  const { sales, earnings, trend } = analytics || {};
+
   return (
     <div className='space-y-6'>
       {/* Error Message */}
@@ -144,77 +159,91 @@ const StorefrontsPage = () => {
         </Card>
       )}
 
-      {/* Stats Cards */}
-      <div className='gap-6 grid grid-cols-1 md:grid-cols-4'>
-        <Card>
-          <CardContent className='p-6'>
-            <div className='flex justify-between items-center'>
-              <div>
-                <p className='font-medium text-gray-600 text-sm'>
-                  Total Stores
-                </p>
-                <p className='font-bold text-gray-900 text-2xl'>
-                  {totalStores}
-                </p>
-              </div>
-              <div className='bg-blue-100 p-3 rounded-full'>
-                <Store className='w-6 h-6 text-blue-600' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Analytics Section */}
+      <div>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[#3bb85e]" />
+            Business Performance
+        </h2>
+        <div className='gap-6 grid grid-cols-1 md:grid-cols-4'>
+            <Card>
+                <CardContent className='p-6'>
+                    <div className='flex justify-between items-center'>
+                    <div>
+                        <p className='font-medium text-gray-600 text-sm'>
+                        Total Sales
+                        </p>
+                        <p className='font-bold text-gray-900 text-2xl'>
+                        {formatNaira(earnings?.total || 0)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">{sales?.completed || 0} Delivered Orders</p>
+                    </div>
+                    <div className='bg-green-100 p-3 rounded-full'>
+                        <DollarSign className='w-6 h-6 text-green-600' />
+                    </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className='p-6'>
-            <div className='flex justify-between items-center'>
-              <div>
-                <p className='font-medium text-gray-600 text-sm'>
-                  Total Products
-                </p>
-                <p className='font-bold text-gray-900 text-2xl'>
-                  {totalProducts}
-                </p>
-              </div>
-              <div className='bg-green-100 p-3 rounded-full'>
-                <Package className='w-6 h-6 text-green-600' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+                <CardContent className='p-6'>
+                    <div className='flex justify-between items-center'>
+                    <div>
+                        <p className='font-medium text-gray-600 text-sm'>
+                        Pending Escrow
+                        </p>
+                        <p className='font-bold text-gray-900 text-2xl'>
+                        {formatNaira(earnings?.pending || 0)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">In active transit</p>
+                    </div>
+                    <div className='bg-orange-100 p-3 rounded-full'>
+                        <Package className='w-6 h-6 text-orange-600' />
+                    </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className='p-6'>
-            <div className='flex justify-between items-center'>
-              <div>
-                <p className='font-medium text-gray-600 text-sm'>
-                  Total Followers
-                </p>
-                <p className='font-bold text-gray-900 text-2xl'>
-                  {totalFollowers}
-                </p>
-              </div>
-              <div className='bg-purple-100 p-3 rounded-full'>
-                <Settings className='w-6 h-6 text-purple-600' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+                <CardContent className='p-6'>
+                    <div className='flex justify-between items-center'>
+                    <div>
+                        <p className='font-medium text-gray-600 text-sm'>
+                        Active Stores
+                        </p>
+                        <p className='font-bold text-gray-900 text-2xl'>
+                        {totalStores}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">Platform visibility</p>
+                    </div>
+                    <div className='bg-blue-100 p-3 rounded-full'>
+                        <Store className='w-6 h-6 text-blue-600' />
+                    </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className='p-6'>
-            <div className='flex justify-between items-center'>
-              <div>
-                <p className='font-medium text-gray-600 text-sm'>Avg Rating</p>
-                <p className='font-bold text-gray-900 text-2xl'>
-                  {averageRating}
-                </p>
-              </div>
-              <div className='bg-orange-100 p-3 rounded-full'>
-                <BarChart3 className='w-6 h-6 text-orange-600' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+                <CardContent className='p-6'>
+                    <div className='flex justify-between items-center'>
+                    <div>
+                        <p className='font-medium text-gray-600 text-sm'>
+                        Overall Rating
+                        </p>
+                        <p className='font-bold text-gray-900 text-2xl'>
+                        {stores.length > 0 
+                          ? (stores.reduce((acc, s) => acc + (s.rating || 0), 0) / stores.length).toFixed(1) 
+                          : "0.0"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">{reviews.length} Recent Reviews</p>
+                    </div>
+                    <div className='bg-yellow-100 p-3 rounded-full'>
+                        <Star className='w-6 h-6 text-yellow-600 fill-current' />
+                    </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       </div>
 
       {/* Storefronts Management */}
@@ -417,7 +446,7 @@ const StorefrontsPage = () => {
                           variant='outline'
                           size='sm'
                           onClick={() =>
-                            handleDeleteStore(store._id, store.name)
+                              handleDeleteStore(store._id, store.name)
                           }
                           className='w-full text-red-600 hover:text-red-700'
                         >
@@ -428,6 +457,62 @@ const StorefrontsPage = () => {
                     </div>
                   </CardContent>
                 </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Latest Reviews Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-500 fill-current" />
+            Latest Store Reviews
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isReviewsLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No reviews yet for your storefronts.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review: any) => (
+                <div key={review._id} className="border-b last:border-0 pb-4 last:pb-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                            {review.user?.profile_img ? (
+                                <img src={review.user.profile_img} alt="User" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">
+                                    {review.user?.firstname?.[0] || "?"}
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold">
+                                {review.user?.firstname} {review.user?.lastname}
+                                <span className="ml-2 font-normal text-xs text-muted-foreground italic truncate">on {review.store?.name}</span>
+                            </p>
+                            <div className="flex items-center gap-0.5">
+                                {[...Array(5)].map((_, i) => (
+                                    <Star key={i} className={`w-3 h-3 ${i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        {new Date(review.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 ml-10">{review.review}</p>
+                </div>
               ))}
             </div>
           )}

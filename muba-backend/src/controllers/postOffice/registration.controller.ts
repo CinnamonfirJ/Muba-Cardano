@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import User from "../../models/users.model";
+import express from "express";
+import type { Request, Response } from "express";
+import User from "../../models/users.model.ts";
 
 // Apply to become a Post Office
 export const RegisterAsPostOffice = async (req: Request, res: Response) => {
@@ -37,3 +38,6 @@ export const RegisterAsPostOffice = async (req: Request, res: Response) => {
         return res.status(500).json({ message: `Error submitting application: ${error}` });
     }
 };
+
+
+

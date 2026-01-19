@@ -1,13 +1,19 @@
-import { Request, Response } from "express";
-import { UserTypes } from "../../dto/users.dto";
-import User from "../../models/users.model";
-import { SendEmail } from "../../utils/sendEmail.utils";
-import { SendEmailTypes } from "../../dto/email.dto";
-import { appConfig } from "../../../config";
-import Jwt from "jsonwebtoken";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import express from "express";
+import type { Request, Response } from "express";
+import type { UserTypes } from "../../dto/users.dto.ts";
+import User from "../../models/users.model.ts";
+import { SendEmail } from "../../utils/sendEmail.utils.ts";
+import type { SendEmailTypes } from "../../dto/email.dto.ts";
+import { appConfig } from "../../../config/index.ts";
+import jwtPkg from "jsonwebtoken";
+const Jwt = jwtPkg;
 import fs from "node:fs";
 import path from "node:path";
-import { hash } from "../../utils/hash.utils";
+import { hash } from "../../utils/hash.utils.ts";
 
 export const SignUp = async (
   req: Request<{}, {}, UserTypes>,
@@ -96,3 +102,10 @@ export const SignUp = async (
     return res.status(500).json({ message: `Internal Server Error: ${err}` });
   }
 };
+
+
+
+
+
+
+

@@ -1,4 +1,5 @@
-import { Types } from "mongoose";
+import pkg from "mongoose";
+const { Types } = pkg;
 
 export type ProductType = "single" | "variant" | "random" | "batch";
 
@@ -36,6 +37,7 @@ export interface ProductVariant {
 }
 
 export interface ProductTypes {
+  _id?: any;
   // Basic Information
   title: string;
   description: string;
@@ -86,8 +88,13 @@ export interface ProductTypes {
   reviews: number;
   views: number;
   likes: number;
+  featuredSlot?: number; // 1-5 for advertisement
+  featuredUntil?: Date; // Expiry date for advertisement
+
 
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+

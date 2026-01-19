@@ -1,5 +1,6 @@
-import { model, models, Schema } from "mongoose";
-import { StoreTypes } from "../dto/stores.dto";
+import pkg from "mongoose";
+const { model, models, Schema } = pkg;
+import type { StoreTypes } from "../dto/stores.dto.ts";
 
 const StoresSchema = new Schema<StoreTypes>(
   {
@@ -19,6 +20,21 @@ const StoresSchema = new Schema<StoreTypes>(
     location: {
       type: String,
       required: true,
+    },
+    settlement_bank: {
+      type: String, // Bank Code e.g "058"
+    },
+    bank_name: {
+      type: String, // e.g., "GTBank"
+    },
+    account_number: {
+      type: String,
+    },
+    paystack_subaccount_code: {
+      type: String, // ACCT_xxxxxxxxx (Required for Split Payments)
+    },
+    paystack_subaccount_id: {
+      type: String, // Integration ID from Paystack
     },
     owner: {
       type: Schema.Types.ObjectId,

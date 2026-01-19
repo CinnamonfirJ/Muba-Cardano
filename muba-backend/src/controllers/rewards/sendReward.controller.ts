@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import express from "express";
+import type { Request, Response } from "express";
 
 // Environment variables
 const BLOCKFROST_API_KEY = process.env.BLOCKFROST_API_KEY || "preprod_YOUR_BLOCKFROST_KEY_HERE"; 
@@ -64,3 +65,5 @@ export const SendReward = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Failed to send reward: " + (error as any).message });
   }
 };
+
+

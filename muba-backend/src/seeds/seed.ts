@@ -1,18 +1,18 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-import Users from "../models/users.model";
-import Stores from "../models/stores.model";
-import Products from "../models/products.model";
-import Orders from "../models/order.model";
-import VendorOrders from "../models/vendorOrder.model";
-import StoreReview from "../models/storeReview.model";
-import Cart from "../models/cart.model";
-import PostOffice from "../models/postOffice.model";
-import Payment from "../models/payment.models";
+import Users from "../models/users.model.ts";
+import Stores from "../models/stores.model.ts";
+import Products from "../models/products.model.ts";
+import Orders from "../models/order.model.ts";
+import VendorOrders from "../models/vendorOrder.model.ts";
+import StoreReview from "../models/storeReview.model.ts";
+import Cart from "../models/cart.model.ts";
+import PostOffice from "../models/postOffice.model.ts";
+import Payment from "../models/payment.models.ts";
 
-import { hash } from "../utils/hash.utils"; // ✅ USE YOUR HASH UTIL
-import { dbConfig } from "../../config";
+import { hash } from "../utils/hash.utils.ts"; // ✅ USE YOUR HASH UTIL
+import { dbConfig } from "../../config/index.ts";
 
 dotenv.config();
 
@@ -46,7 +46,7 @@ async function seedDatabase() {
     // --------------------
     // HASH PASSWORDS
     // --------------------
-    const adminPassword = await hash("123456");
+    const adminPassword = await hash("BMWnvm5r'89I");
     const userPassword = await hash("password123");
     const vendorPassword = await hash("vendor123");
     const postOfficePassword = await hash("postoffice123");
@@ -57,7 +57,7 @@ async function seedDatabase() {
     const admin = await Users.create({
       firstname: "Sellza",
       lastname: "Admins",
-      email: "sellza@example.com",
+      email: "sellzamuba@gmail.com",
       password: adminPassword,
       role: "admin",
     });
@@ -267,3 +267,6 @@ store.products.push(bobaTea._id);
 }
 
 seedDatabase();
+
+
+

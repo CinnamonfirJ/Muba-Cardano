@@ -31,12 +31,14 @@ export interface User {
   avatar?: string;
   profile_img?: string;
   rating?: number;
+  successful_deliveries?: number;
   stores?: any[];
   vendorStatus?: "none" | "pending" | "accepted" | "rejected";
   postOfficeStatus?: "none" | "pending" | "accepted" | "rejected";
   postOfficeName?: string;
   createdAt?: string;
   updatedAt?: string;
+  favorites?: string[];
 }
 
 export const authService = {

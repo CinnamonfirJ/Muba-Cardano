@@ -39,6 +39,7 @@ import {
   XCircle,
   Clock,
   AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -230,8 +231,13 @@ export default function VendorOrdersPage() {
                         <div className="flex flex-col">
                           <span className="font-semibold text-gray-900">{order.customer_id?.firstname || "Guest"}</span>
                           <span className="text-muted-foreground text-xs uppercase tracking-wider">
-                            {order.customer_id?.email?.split('@')[0]}
+                            {order.customer_id?.phone || order.customer_id?.email?.split('@')[0]}
                           </span>
+                          {order.customer_id?.delivery_location && (
+                              <span className="text-[10px] text-[#3bb85e] font-bold mt-0.5">
+                               📍 {order.customer_id.delivery_location}
+                              </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="font-bold">
@@ -263,6 +269,17 @@ export default function VendorOrdersPage() {
                               </div>
                               <span className="font-semibold">View Details</span>
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-lg cursor-pointer flex items-center gap-2 px-3 py-2"
+                              onClick={() => {
+                                  if (order.customer_id?.phone) window.location.href = `tel:${order.customer_id.phone}`;
+                              }}
+                            >
+                              <div className="bg-blue-50 p-1.5 rounded-lg">
+                                <MessageCircle className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <span className="font-semibold">Call Customer</span>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator className="my-1" />
                             <DropdownMenuLabel className="text-xs text-gray-400 uppercase tracking-widest px-2 py-1">Status Update</DropdownMenuLabel>
                              <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => handleStatusUpdate(order._id, "processing")}>
@@ -273,10 +290,7 @@ export default function VendorOrdersPage() {
                                 <div className="w-2 h-2 rounded-full bg-purple-500 mr-2" />
                                 Mark as Shipped
                              </DropdownMenuItem>
-                             <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => handleStatusUpdate(order._id, "delivered")}>
-                                <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                                Mark as Delivered
-                             </DropdownMenuItem>
+
                              <DropdownMenuSeparator className="my-1" />
                              <DropdownMenuItem 
                                 className="text-red-500 focus:text-red-600 rounded-lg cursor-pointer bg-red-50/50 hover:bg-red-50"
@@ -320,8 +334,16 @@ export default function VendorOrdersPage() {
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Customer</p>
                                 <p className="font-bold text-gray-900 truncate">{order.customer_id?.firstname || "Guest Customer"}</p>
+                                <p className="text-xs text-[#3bb85e] font-bold">{order.customer_id?.phone}</p>
                             </div>
                         </div>
+
+                        {order.customer_id?.delivery_location && (
+                            <div className="flex items-start gap-2 text-xs text-gray-600 bg-orange-50/30 p-2 rounded-lg border border-orange-100/50">
+                                <span className="shrink-0">📍</span>
+                                <span className="font-medium">{order.customer_id.delivery_location}</span>
+                            </div>
+                        )}
 
                         <div className="flex justify-between items-end pt-1">
                             <div>

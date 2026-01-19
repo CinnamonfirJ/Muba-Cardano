@@ -1,9 +1,12 @@
-import express, { NextFunction, Request, Response, urlencoded } from "express";
-import { appConfig } from "../config";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+const { urlencoded } = express;
+;
+import { appConfig } from "../config/index.ts";
 import cors from "cors";
-import router from "./routes";
+import router from "./routes/index.ts";
 import cookies from "cookie-parser";
-import { dbConn } from "./db";
+import { dbConn } from "./db/index.ts";
 
 const app = express();
 
@@ -20,7 +23,11 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 app.use(urlencoded({ extended: true }));
 
@@ -38,8 +45,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 dbConn().then(() => {
-app.listen(appConfig.port, () => {
-  console.log(`Server is running on port ${appConfig.port}`);
+  app.listen(appConfig.port, () => {
+    console.log(`Server is running on port ${appConfig.port}`);
+    
+    // Start Engagement Service Worker
+    import("./services/engagement.service.ts").then(({ EngagementService }) => {
+      EngagementService.startWorker();
+    });
+  });
 });
 
-})

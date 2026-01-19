@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -30,7 +31,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useMyOrders } from "@/hooks/useOrders";
-import { Order } from "@/services/orderService";
+import { Order, orderService } from "@/services/orderService";
+import { ReviewModal } from "@/components/reviews/ReviewModal";
+import toast from "react-hot-toast";
 
 const OrdersPage = () => {
   const router = useRouter();
@@ -38,6 +41,25 @@ const OrdersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   
+  // Review Modal State (Moved to top level)
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedReviewItem, setSelectedReviewItem] = useState<{
+      productId: string;
+      productName: string;
+      productImage?: string;
+      orderId: string;
+  } | null>(null);
+
+  const openReviewModal = (orderId: string, item: any) => {
+      setSelectedReviewItem({
+          productId: item.product_id._id || item.product_id,
+          productName: item.product_id.title || item.name,
+          productImage: item.product_id?.img?.[0] || item.product_id?.images?.[0] || item.img?.[0],
+          orderId: orderId
+      });
+      setReviewModalOpen(true);
+  };
+
   const { data: ordersData, isLoading, error, refetch } = useMyOrders();
   // Service returns { message: string, data: Order[] }
   const orders: Order[] = Array.isArray(ordersData) 
@@ -52,13 +74,16 @@ const OrdersPage = () => {
         return "bg-purple-100 text-purple-800";
       case "ready_for_pickup":
         return "bg-orange-100 text-orange-800";
+      case "shipped":
+      case "dispatched":
+        return "bg-indigo-100 text-indigo-800";
       case "paid":
       case "order_confirmed":
         return "bg-blue-100 text-blue-800";
-      case "pending_payment":
-        return "bg-gray-100 text-gray-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "pending_payment":
+        return "bg-red-50 text-red-600 border border-red-100";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -71,11 +96,16 @@ const OrdersPage = () => {
       case "ready_for_pickup":
       case "handed_to_post_office":
         return <Truck className='w-4 h-4' />;
+      case "shipped":
+      case "dispatched":
+        return <Truck className='w-4 h-4' />;
       case "order_confirmed":
       case "paid":
         return <Clock className='w-4 h-4' />;
       case "cancelled":
         return <XCircle className='w-4 h-4' />;
+      case "pending_payment":
+        return <AlertCircle className='w-4 h-4 text-red-500' />;
       default:
         return <Package className='w-4 h-4' />;
     }
@@ -128,98 +158,132 @@ const OrdersPage = () => {
   };
 
   const OrderCard = ({ order }: { order: Order }) => {
-    // Get dominant status from items
-    const itemStatuses = order.items
-        .map((item) => item.status)
-        .filter((status): status is string => !!status); // Filter out undefined/null
+    const safeStatus = order.status || "order_confirmed";
+    const isP2P = (order as any).delivery_option === "peer_to_peer" || (order.items[0] as any)?.vendor_qr_code;
+    const canConfirm = isP2P && ["shipped", "order_confirmed", "ready_for_pickup"].includes(safeStatus);
+    const [confirming, setConfirming] = useState(false);
 
-    const dominantStatus = itemStatuses.length > 0 ? itemStatuses.reduce((a, b, i, arr) =>
-      arr.filter((v) => v === a).length >= arr.filter((v) => v === b).length
-        ? a
-        : b
-    ) : "pending";
+    const handleConfirmDelivery = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!confirming) {
+        setConfirming(true);
+        return;
+      }
 
-    // Safe access helper
-    const safeStatus = dominantStatus || "pending";
+      const toastId = toast.loading("Confirming delivery...");
+      try {
+        await orderService.confirmP2PDelivery(order._id);
+        toast.success("Delivery Confirmed!", { id: toastId });
+        refetch();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to confirm", { id: toastId });
+        setConfirming(false);
+      }
+    };
+
+    const handleDeleteOrder = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!confirm("Are you sure you want to cancel this pending commitment?")) return;
+
+      const toastId = toast.loading("Deleting commitment...");
+      try {
+        await orderService.deleteOrder(order._id);
+        toast.success("Order deleted", { id: toastId });
+        refetch();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to delete", { id: toastId });
+      }
+    };
+
+    const handleRetryPayment = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      router.push(`/payment/verify/${order.payment_reference}`);
+    };
 
     return (
-      <Card className='hover:shadow-md mb-4 transition-shadow'>
-        <CardContent className='p-4 sm:p-6'>
-          <div className='space-y-4'>
+      <Card className="hover:shadow-md mb-4 transition-shadow">
+        <CardContent className="p-4 sm:p-6">
+          <div className="space-y-4">
             {/* Header */}
-            <div className='flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3'>
-              <div className='space-y-1'>
-                <h3 className='font-semibold text-gray-900 text-base sm:text-lg'>
+            <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
                   Order #{order._id?.slice(-8).toUpperCase()}
                 </h3>
-                <p className='text-gray-500 text-xs sm:text-sm'>
+                <p className="text-gray-500 text-xs sm:text-sm">
                   {formatDate(order.createdAt)}
                 </p>
               </div>
-              <Badge
-                className={`${getStatusColor(safeStatus)} self-start sm:self-auto`}
-              >
-                <div className='flex items-center gap-1'>
+              <Badge className={`${getStatusColor(safeStatus)} self-start sm:self-auto`}>
+                <div className="flex items-center gap-1">
                   {getStatusIcon(safeStatus)}
-                  <span className='text-xs sm:text-sm'>
-                    {safeStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  <span className="text-xs sm:text-sm">
+                    {safeStatus.split("_").map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}
                   </span>
                 </div>
               </Badge>
             </div>
 
             {/* Order Items */}
-            <div className='space-y-3'>
+            <div className="space-y-3">
               {order.items.map((item) => (
-                <div key={item._id} className='flex gap-3 sm:gap-4'>
-                  {/* Product Image */}
-                  <div className='w-16 sm:w-20 h-16 sm:h-20 shrink-0'>
+                <div key={item._id} className="flex gap-3 sm:gap-4">
+                  <div className="w-16 sm:w-20 h-16 sm:h-20 shrink-0">
                     {item.product_id?.img?.[0] || item.product_id?.images?.[0] || item.img?.[0] ? (
                       <img
                         src={item.product_id?.img?.[0] || item.product_id?.images?.[0] || item.img?.[0]}
                         alt={item.product_id?.title || "Product"}
-                        className='rounded-lg w-full h-full object-cover'
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
+                        className="rounded-lg w-full h-full object-cover"
                       />
                     ) : (
-                      <div className='flex justify-center items-center bg-gray-100 rounded-lg w-full h-full'>
-                        <Package className='w-6 sm:w-8 h-6 sm:h-8 text-gray-400' />
+                      <div className="flex justify-center items-center bg-gray-100 rounded-lg w-full h-full">
+                        <Package className="w-6 sm:w-8 h-6 sm:h-8 text-gray-400" />
                       </div>
                     )}
                   </div>
-
-                  {/* Product Details */}
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='font-medium text-gray-900 text-sm sm:text-base truncate'>
-                      {item.product_id?.title || "Product"}
-                    </h4>
-                    <div className='space-y-1 mt-1'>
-                      <p className='text-gray-600 text-xs sm:text-sm'>
-                        Qty: {item.quantity} × ₦{item.price.toLocaleString()}
-                      </p>
-                      <Badge
-                        className={`${getStatusColor(item.status)} text-xs`}
-                      >
-                        {item.status}
-                      </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                          {item.product_id?.title || "Product"}
+                        </h4>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-gray-600 text-xs sm:text-sm">
+                            Qty: {item.quantity} × ₦{item.price.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      {safeStatus === "delivered" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-[#3bb85e] hover:text-[#2d8f4a] hover:bg-green-50 h-8 px-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openReviewModal(order._id, item);
+                          }}
+                        >
+                          <Star className="w-4 h-4 mr-1 fill-current" />
+                          Rate
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Order Summary */}
-            <div className='space-y-2 pt-3 border-t'>
-              <div className='flex justify-between items-center text-sm'>
-                <span className='text-gray-600'>Total Amount:</span>
-                <span className='font-bold text-gray-900 text-base sm:text-lg'>
-                  ₦{(order.total || 0).toLocaleString()}
+            <Separator className="my-2" />
+
+            {/* Footer / Total */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-xs sm:text-sm italic">Grand Total</span>
+                <span className="font-bold text-gray-900 text-base sm:text-lg">
+                  ₦{(order.total_amount || 0).toLocaleString()}
                 </span>
               </div>
-              <div className='flex justify-between items-center text-gray-500 text-xs sm:text-sm'>
+              <div className="flex justify-between items-center text-gray-500 text-xs sm:text-sm">
                 <span>
                   {order.items.length} item{order.items.length !== 1 ? "s" : ""}
                 </span>
@@ -228,33 +292,63 @@ const OrdersPage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className='flex sm:flex-row flex-col gap-2 pt-2'>
+            <div className="flex sm:flex-row flex-col gap-2 pt-2">
               <Button
-                variant='outline'
-                size='sm'
-                className='flex-1 text-xs sm:text-sm'
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs sm:text-sm"
                 onClick={() => {
-                  router.push(`/dashboard/orders/${order._id}`)
+                  router.push(`/dashboard/orders/${order._id}`);
                 }}
               >
-                <Eye className='mr-2 w-3 sm:w-4 h-3 sm:h-4' />
+                <Eye className="mr-2 w-3 sm:w-4 h-3 sm:h-4" />
                 View Details
               </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                className='flex-1 text-xs sm:text-sm'
-              >
-                <MessageCircle className='mr-2 w-3 sm:w-4 h-3 sm:h-4' />
-                Contact Seller
-              </Button>
-              {dominantStatus === "delivered" && (
+
+              {safeStatus === "pending_payment" && (
+                <>
+                  <Button
+                    onClick={handleRetryPayment}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-sm"
+                  >
+                    <RefreshCw className="mr-2 w-3 sm:w-4 h-3 sm:h-4" />
+                    Retry Payment
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteOrder}
+                    className="flex-1 text-red-500 hover:text-red-600 hover:bg-red-50 text-xs sm:text-sm"
+                  >
+                    <XCircle className="mr-2 w-3 sm:w-4 h-3 sm:h-4" />
+                    Delete Order
+                  </Button>
+                </>
+              )}
+
+              {safeStatus !== "pending_payment" && (
                 <Button
-                  size='sm'
-                  className='flex-1 bg-[#3bb85e] hover:bg-[#2d8f4a] text-xs sm:text-sm'
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs sm:text-sm"
+                  onClick={() => {
+                    const phone = order.items[0]?.product_id?.store?.owner?.phone;
+                    if (phone) window.location.href = `tel:${phone}`;
+                  }}
                 >
-                  <Star className='mr-2 w-3 sm:w-4 h-3 sm:h-4' />
-                  Leave Review
+                  <MessageCircle className="mr-2 w-3 sm:w-4 h-3 sm:h-4" />
+                  Contact Seller
+                </Button>
+              )}
+
+              {canConfirm && (
+                <Button
+                  size="sm"
+                  onClick={handleConfirmDelivery}
+                  className={`flex-1 text-xs sm:text-sm ${confirming ? "bg-red-500 hover:bg-red-600" : "bg-[#3bb85e] hover:bg-[#2d8f4a]"}`}
+                >
+                  <CheckCircle className="mr-2 w-3 sm:w-4 h-3 sm:h-4" />
+                  {confirming ? "Click to Confirm" : "Confirm Delivery"}
                 </Button>
               )}
             </div>
@@ -324,11 +418,13 @@ const OrdersPage = () => {
     );
   }
 
+  // Hook declarations moved to top level
+
   return (
     <div className="space-y-6 pb-20">
       <div className="px-4 pt-4">
-          <h1 className="font-bold text-3xl tracking-tight font-mona flex items-center gap-3">
-            <Package className="text-[#3bb85e] w-8 h-8" />
+          <h1 className="font-bold text-3xl text-[#3bb85e] tracking-tight font-mona flex items-center gap-3">
+            <Package className="w-8 h-8" />
             My Orders
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -421,8 +517,18 @@ const OrdersPage = () => {
             ))}
           </Tabs>
       </div>
+
+      {selectedReviewItem && (
+        <ReviewModal 
+            isOpen={reviewModalOpen}
+            onClose={() => setReviewModalOpen(false)}
+            productId={selectedReviewItem.productId}
+            productName={selectedReviewItem.productName}
+            productImage={selectedReviewItem.productImage}
+            orderId={selectedReviewItem.orderId}
+        />
+      )}
     </div>
   );
 };
-
 export default OrdersPage;

@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
-import VendorOrders from "../../models/vendorOrder.model";
-import Orders from "../../models/order.model";
-import { ORDER_STATUSES } from "../../utils/orderStatus.util";
+import express from "express";
+import type { Request, Response } from "express";
+import VendorOrders from "../../models/vendorOrder.model.ts";
+import Orders from "../../models/order.model.ts";
+import { ORDER_STATUSES } from "../../utils/orderStatus.util.ts";
 
 /**
  * Mark Order as Ready for Pickup
@@ -85,3 +86,6 @@ export const MarkAsReadyForPickup = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+

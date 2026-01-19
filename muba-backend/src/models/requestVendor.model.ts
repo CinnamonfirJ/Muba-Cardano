@@ -1,5 +1,6 @@
-import { model, models, Schema } from "mongoose";
-import { RequestVendorTypes } from "../dto/requestVendor.dto";
+import pkg from "mongoose";
+const { model, models, Schema } = pkg;
+import type { RequestVendorTypes } from "../dto/requestVendor.dto.ts";
 
 const RequestVendorSchema = new Schema<RequestVendorTypes>({
   firstname: {
@@ -46,3 +47,7 @@ const RequestVendor =
   model<RequestVendorTypes>("VendorRequests", RequestVendorSchema);
 
 export default RequestVendor;
+
+
+
+

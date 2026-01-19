@@ -89,11 +89,11 @@ export default function VendorOrderDetailsPage() {
 
   const calculateTotal = () => {
     if (!order.items) return 0;
-    const itemsTotal = order.items.reduce((sum, item) => {
+    const itemsTotal = order.items.reduce((sum: number, item: any) => {
         const price = item.product_id?.price ?? item.price ?? 0;
         return sum + (price * item.quantity);
     }, 0);
-    return itemsTotal + (order.delivery_fee || 0);
+    return itemsTotal; // Delivery fee removed
   };
 
   const totalAmount = calculateTotal();
@@ -170,7 +170,7 @@ export default function VendorOrderDetailsPage() {
                             >
                                 <div className="bg-white rounded-2xl w-24 h-24 overflow-hidden shrink-0 border border-gray-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
                                     <img 
-                                        src={item.product_id?.img?.[0] || "/placeholder.svg"} 
+                                        src={item.img?.[0] || "/placeholder.svg"} 
                                         alt={item.name} 
                                         className="w-full h-full object-cover"
                                     />
@@ -217,17 +217,18 @@ export default function VendorOrderDetailsPage() {
                     <div className="space-y-2">
                         <div className="flex justify-between text-white/80 text-sm font-medium">
                             <span>Order Subtotal</span>
-                            <span>₦{((totalAmount - (order.delivery_fee || 0))).toLocaleString()}</span>
+                            <span>₦{order.total_amount.toLocaleString()}</span>
                         </div>
+                        {/* Delivery Fee Removed */}
                         <div className="flex justify-between text-white/80 text-sm font-medium">
-                            <span>Delivery Logistics</span>
-                            <span>₦{(order.delivery_fee || 0).toLocaleString()}</span>
+                            <span>Platform Fee</span>
+                            <span>-₦{(order.platform_fee || 0).toLocaleString()}</span>
                         </div>
                     </div>
                     <div className="border-t border-white/20 pt-4 flex justify-between items-center group">
                         <div>
                             <p className="text-white/70 text-xs font-black uppercase tracking-widest">Total Earned</p>
-                            <span className="font-black text-4xl tracking-tighter tabular-nums drop-shadow-sm">₦{totalAmount.toLocaleString()}</span>
+                            <span className="font-black text-4xl tracking-tighter tabular-nums drop-shadow-sm">₦{(order.vendor_earnings || 0).toLocaleString()}</span>
                         </div>
                         <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md group-hover:scale-110 transition-transform">
                             <Zap className="w-6 h-6 text-yellow-300 fill-yellow-300" />

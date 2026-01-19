@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import Stores from "../../models/stores.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Stores from "../../models/stores.model.ts";
 
 export const SearchStores = async (req: Request, res: Response) => {
   try {
@@ -24,3 +25,6 @@ export const SearchStores = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+
+

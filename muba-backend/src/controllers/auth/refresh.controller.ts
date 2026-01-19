@@ -1,8 +1,10 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../../models/users.model";
-import Jwt from "jsonwebtoken";
-import { tokenConfig } from "../../../config";
-import { CustomErr } from "../../utils/errors.utils";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import User from "../../models/users.model.ts";
+import jwtPkg from "jsonwebtoken";
+const Jwt = jwtPkg;
+import { tokenConfig } from "../../../config/index.ts";
+import { CustomErr } from "../../utils/errors.utils.ts";
 
 // Helper function to manually parse cookies
 const parseCookies = (
@@ -104,3 +106,8 @@ export const RefreshToken = async (
     return next(err);
   }
 };
+
+
+
+
+

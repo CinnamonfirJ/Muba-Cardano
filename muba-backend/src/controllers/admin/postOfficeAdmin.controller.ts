@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
-import User from "../../models/users.model";
-import { SendEmailTypes } from "../../dto/email.dto";
-import { SendEmail } from "../../utils/sendEmail.utils";
+import express from "express";
+import type { Request, Response } from "express";
+import User from "../../models/users.model.ts";
+import type { SendEmailTypes } from "../../dto/email.dto.ts";
+import { SendEmail } from "../../utils/sendEmail.utils.ts";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -96,3 +97,7 @@ export const RejectPostOfficeApplication = async (req: Request, res: Response) =
         return res.status(500).json({ message: `Error rejecting application: ${error}` });
     }
 };
+
+
+
+

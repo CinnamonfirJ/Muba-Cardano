@@ -1,5 +1,6 @@
-import { NextFunction, Request, Response } from "express";
-import Users from "../../models/users.model";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import Users from "../../models/users.model.ts";
 
 // Badge Threshold Definitions
 const BADGE_RULES = {
@@ -77,3 +78,6 @@ export const GetBadgeEligibility = async (
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+

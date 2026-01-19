@@ -1,5 +1,6 @@
-import { NextFunction, Request, Response } from "express";
-import Users from "../../models/users.model";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
+import Users from "../../models/users.model.ts";
 
 // Environment variables should be used for these
 const BLOCKFROST_API_KEY = process.env.BLOCKFROST_API_KEY || "preprod_YOUR_BLOCKFROST_KEY_HERE"; 
@@ -125,3 +126,6 @@ export const MintBadge = async (
     return res.status(500).json({ message: "Failed to mint badge: " + (error as any).message });
   }
 };
+
+
+

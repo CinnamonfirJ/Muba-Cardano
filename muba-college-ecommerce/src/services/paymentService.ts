@@ -8,6 +8,7 @@ export interface PaymentInitData {
 
 export interface PaymentResponse {
   status: boolean;
+  reference: string;
   tx: any;
   authorization_url: string;
 }

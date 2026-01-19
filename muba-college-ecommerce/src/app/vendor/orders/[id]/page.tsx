@@ -227,11 +227,21 @@ export default function VendorOrderDetailsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
+                    {/* P2P delivery methods can use shipped status */}
+                    {(deliveryOption === "self" || deliveryOption === "rider" || deliveryOption === "peer_to_peer") && (
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  👆 "Handed to Post Office", "Ready for Pickup", and "Delivered" statuses are set automatically when the Post Office scans the package.
-                </p>
+                {deliveryOption === "school_post" ? (
+                  <p className="text-xs text-muted-foreground">
+                    👆 "Handed to Post Office", "Ready for Pickup", and "Delivered" statuses are set automatically when the Post Office scans the package.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    👆 For self/rider delivery, mark as "Shipped" when you dispatch the order. Customer will confirm delivery.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

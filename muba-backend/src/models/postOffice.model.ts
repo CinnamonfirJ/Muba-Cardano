@@ -1,4 +1,5 @@
-import { Schema, model, models } from "mongoose";
+import pkg from "mongoose";
+const { Schema, model, models } = pkg;
 
 const PostOfficeHandoverSchema = new Schema(
   {
@@ -59,3 +60,5 @@ const PostOfficeHandoverSchema = new Schema(
 const PostOfficeHandover = models.PostOfficeHandover || model("PostOfficeHandover", PostOfficeHandoverSchema);
 
 export default PostOfficeHandover;
+
+

@@ -1,18 +1,23 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   ShoppingBasket,
   Star,
   StarHalf,
   Heart,
   MessageCircle,
+  Share2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { useCart } from "../context/CartContext";
-import type { Product } from "../services/productService";
+import { useAuth } from "../context/AuthContext";
+import { productService, type Product } from "../services/productService";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 interface ProductCardProps {
   item: Product;
@@ -47,9 +52,69 @@ const renderStars = (rating: number) => {
 
 export const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
   const { addItem } = useCart();
+  const { user, updateUser } = useAuth();
+  const [isLiking, setIsLiking] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
+  useEffect(() => {
+    if (user?.favorites) {
+      setIsLiked(user.favorites.includes(item._id));
+    }
+  }, [user?.favorites, item._id]);
 
   const handleAddToCart = () => {
     addItem(item);
+    toast.success("Added to cart");
+  };
+
+  const handleToggleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Please login to favorite products");
+      return;
+    }
+
+    setIsLiking(true);
+    try {
+      const res = await productService.toggleLikeProduct(item._id);
+      setIsLiked(res.liked);
+      
+      const currentFavorites = user.favorites || [];
+      const updatedFavorites = res.liked 
+        ? [...currentFavorites, item._id]
+        : currentFavorites.filter(id => id !== item._id);
+      
+      updateUser({ favorites: updatedFavorites });
+      toast.success(res.message);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update favorites");
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const shareData = {
+      title: item.title,
+      text: `Check out this ${item.title} for ₦${item.price.toLocaleString()} on Muba!`,
+      url: `${window.location.origin}/product/${item._id}`,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("Link copied to clipboard");
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
   };
 
   if (viewMode === "list") {
@@ -81,13 +146,25 @@ export const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                     {item.title}
                   </h3>
                 </Link>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='p-0 w-6 sm:w-8 h-6 sm:h-8 text-neutral-400 hover:text-red-500'
-                >
-                  <Heart className='w-3 sm:w-4 h-3 sm:h-4' />
-                </Button>
+                <div className="flex gap-1">
+                    <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={handleShare}
+                        className='p-0 w-6 sm:w-8 h-6 sm:h-8 text-neutral-400 hover:text-[#3bb85e]'
+                    >
+                        <Share2 className='w-3 sm:w-4 h-3 sm:h-4' />
+                    </Button>
+                    <Button
+                        variant='ghost'
+                        size='sm'
+                        disabled={isLiking}
+                        onClick={handleToggleLike}
+                        className={`p-0 w-6 sm:w-8 h-6 sm:h-8 ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-neutral-400 hover:text-red-500'}`}
+                    >
+                        {isLiking ? <Loader2 className="w-3 sm:w-4 h-3 sm:h-4 animate-spin" /> : <Heart className={`w-3 sm:w-4 h-3 sm:h-4 ${isLiked ? 'fill-current' : ''}`} />}
+                    </Button>
+                </div>
               </div>
               <div className='flex items-center gap-1 sm:gap-2'>
                 {renderStars(item.rating)}
@@ -115,11 +192,6 @@ export const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
               <div className='flex justify-between items-center'>
                 <div className='text-neutral-600 text-xs sm:text-sm'>
                   <div>by {item.store.name}</div>
-                  {/* {item.location && (
-                    <div className='flex items-center gap-1 mt-0.5 sm:mt-1'>
-                      {item.location}
-                    </div>
-                  )} */}
                 </div>
                 <div className='flex gap-1 sm:gap-2'>
                   <Button
@@ -161,13 +233,25 @@ export const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
               PROMO
             </Badge>
           )}
-          <Button
-            variant='ghost'
-            size='sm'
-            className='top-2 right-2 absolute bg-white/80 hover:bg-white p-0 w-7 sm:w-8 h-7 sm:h-8 text-neutral-600 hover:text-red-500'
-          >
-            <Heart className='w-4 h-4' />
-          </Button>
+          <div className="top-2 right-2 absolute flex flex-col gap-1">
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={handleShare}
+                className='bg-white/80 hover:bg-white p-0 w-7 sm:w-8 h-7 sm:h-8 text-neutral-600 hover:text-[#3bb85e]'
+              >
+                <Share2 className='w-4 h-4' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='sm'
+                disabled={isLiking}
+                onClick={handleToggleLike}
+                className={`bg-white/80 hover:bg-white p-0 w-7 sm:w-8 h-7 sm:h-8 ${isLiked ? 'text-red-500' : 'text-neutral-600 hover:text-red-500'}`}
+              >
+                {isLiking ? <Loader2 className="w-4 h-4 animate-spin text-gray-300" /> : <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />}
+              </Button>
+          </div>
           {item.condition && (
             <Badge
               variant='outline'

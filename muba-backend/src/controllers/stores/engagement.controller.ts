@@ -1,7 +1,8 @@
-import { Request, Response, RequestHandler } from "express";
-import Store from "../../models/stores.model";
-import User from "../../models/users.model";
-import StoreReview from "../../models/storeReview.model";
+import express from "express";
+import type { Request, Response, RequestHandler } from "express";
+import Store from "../../models/stores.model.ts";
+import User from "../../models/users.model.ts";
+import StoreReview from "../../models/storeReview.model.ts";
 
 // Follow Store
 // Follow Store
@@ -168,3 +169,6 @@ export const GetStoreReviews: RequestHandler = async (req, res, next) => {
       .json({ message: error.message || "Failed to fetch reviews" });
   }
 };
+
+
+

@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import Users from "../../models/users.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Users from "../../models/users.model.ts";
 
 export const UpdateUser = async (req: Request, res: Response) => {
   try {
@@ -26,3 +27,5 @@ export const UpdateUser = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+

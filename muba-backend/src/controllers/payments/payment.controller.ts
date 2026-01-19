@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import Payments from "../../models/payment.models";
+import express from "express";
+import type { Request, Response } from "express";
+import Payments from "../../models/payment.models.ts";
 
 export const GetPaymentStats = async (req: Request, res: Response) => {
   try {
@@ -25,3 +26,6 @@ export const GetPaymentStats = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+
+

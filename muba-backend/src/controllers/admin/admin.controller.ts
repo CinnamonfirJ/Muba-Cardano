@@ -1,12 +1,17 @@
-import { Request, Response } from "express";
-import Users from "../../models/users.model";
-import RequestVendor from "../../models/requestVendor.model";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import express from "express";
+import type { Request, Response } from "express";
+import Users from "../../models/users.model.ts";
+import RequestVendor from "../../models/requestVendor.model.ts";
 import fs from "node:fs";
 import path from "node:path";
-import { SendEmailTypes } from "../../dto/email.dto";
-import { SendEmail } from "../../utils/sendEmail.utils";
-import Payments from "../../models/payment.models";
-import Stores from "../../models/stores.model";
+import type { SendEmailTypes } from "../../dto/email.dto.ts";
+import { SendEmail } from "../../utils/sendEmail.utils.ts";
+import Payments from "../../models/payment.models.ts";
+import Stores from "../../models/stores.model.ts";
 
 // Get all vendor applications (simplified approach like GetVendors)
 export const GetAllVendorApplications = async (req: Request, res: Response) => {
@@ -537,3 +542,8 @@ export const ToggleUserBan = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+
+
+

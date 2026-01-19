@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import {
   Heart,
   Star,
@@ -27,10 +28,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { useProduct, useStoreProducts } from "@/hooks/useProducts";
 import ExpandableTitle from "@/components/ExpandableTitle";
-import { Product } from "@/services/productService";
+import { productService, Product } from "@/services/productService";
 import VariantSelector from "@/components/product/VariantSelector";
+import { ProductReviews } from "@/components/reviews/ProductReviews";
 
 // Helper components
 const renderStars = (rating: number, size = "w-4 h-4") => {
@@ -68,6 +71,7 @@ export default function ProductDetailsPage() {
   
   const router = useRouter();
   const { addItem, isItemInCart, getItemQuantity, alreadyInCart } = useCart();
+  const { user, updateUser } = useAuth();
 
   // Fetch Product
   const { data: productData, isLoading, error: queryError, refetch } = useProduct(id);
@@ -79,8 +83,61 @@ export default function ProductDetailsPage() {
   const [selectedVariant, setSelectedVariant] = useState<any | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   const [isImageExpanded, setIsImageExpanded] = useState(false);
+
+  useEffect(() => {
+    if (user?.favorites && product?._id) {
+      setIsLiked(user.favorites.includes(product._id));
+    }
+  }, [user?.favorites, product?._id]);
+
+  const handleToggleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user || !product) {
+      toast.error("Please login to favorite products");
+      return;
+    }
+
+    setIsLiking(true);
+    try {
+      const res = await productService.toggleLikeProduct(product._id);
+      setIsLiked(res.liked);
+      
+      const currentFavorites = user.favorites || [];
+      const updatedFavorites = res.liked 
+        ? [...currentFavorites, product._id]
+        : currentFavorites.filter(id => id !== product._id);
+      
+      updateUser({ favorites: updatedFavorites });
+      toast.success(res.message);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update favorites");
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    const shareData = {
+      title: product.title,
+      text: `Check out this ${product.title} for ₦${product.price.toLocaleString()} on Muba!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("Link copied to clipboard");
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
 
   // Mobile touch states
   const [touchStart, setTouchStart] = useState(0);
@@ -284,17 +341,18 @@ export default function ProductDetailsPage() {
             {product.title || "Product"}
           </h1>
           <div className='flex gap-2'>
-            <Button variant='ghost' size='sm' className='p-0'>
+            <Button variant='ghost' size='sm' className='p-0' onClick={handleShare}>
               <Share2 className='w-5 h-5' />
             </Button>
             <Button
               variant='ghost'
               size='sm'
               className='p-0'
-              onClick={() => setIsWishlisted(!isWishlisted)}
+              disabled={isLiking}
+              onClick={handleToggleLike}
             >
               <Heart
-                className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+                className={`w-5 h-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
               />
             </Button>
           </div>
@@ -456,16 +514,17 @@ export default function ProductDetailsPage() {
                 Back
               </Button>
               <div className='flex gap-2'>
-                <Button variant='outline' size='sm'>
+                <Button variant='outline' size='sm' onClick={handleShare}>
                   <Share2 className='w-4 h-4' />
                 </Button>
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  disabled={isLiking}
+                  onClick={handleToggleLike}
                 >
                   <Heart
-                    className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+                    className={`w-4 h-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
                   />
                 </Button>
               </div>
@@ -657,6 +716,15 @@ export default function ProductDetailsPage() {
                    </button>
                 </div>
               )}
+
+              {/* Reviews Section */}
+              <div className="mt-8 pt-8 border-t border-gray-100">
+                  <ProductReviews 
+                      productId={product._id} 
+                      productName={product.title}
+                      productImage={product.images?.[0]}
+                  />
+              </div>
             </div>
 
             <div className='lg:hidden bottom-0 left-0 fixed z-40 bg-white/95 backdrop-blur-sm shadow-[0_-8px_30px_rgb(0,0,0,0.04)] p-4 border-t border-gray-100 w-full'>

@@ -29,6 +29,9 @@ export interface VendorOrder {
   }>;
   delivery_option: "school_post" | "self" | "rider";
   delivery_fee: number;
+  platform_fee: number;
+  total_amount: number;
+  vendor_earnings: number;
   rider_info?: {
     name: string;
     phone: string;

@@ -1,5 +1,6 @@
-import { model, models, Schema, Types } from "mongoose";
-import { ProductTypes } from "../dto/products.dto";
+import pkg from "mongoose";
+const { model, models, Schema, Types } = pkg;
+import type { ProductTypes } from "../dto/products.dto.ts";
 
 const ProductSchema = new Schema<ProductTypes>(
   {
@@ -83,6 +84,16 @@ const ProductSchema = new Schema<ProductTypes>(
     reviews: { type: Number, default: 0 },
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
+
+    // Advertisement / Featured
+    featuredSlot: { 
+      type: Number, 
+      min: 1, 
+      max: 5, 
+      sparse: true, 
+      unique: true 
+    },
+    featuredUntil: { type: Date },
   },
   { timestamps: true }
 );

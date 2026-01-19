@@ -1,11 +1,17 @@
-import { Router } from "express";
-import { GetVendor, GetVendors } from "../controllers/vendors/get.controller";
-import { RequestToBeVendor } from "../controllers/vendors/request.controller";
-import { CheckAdmin } from "../middlewares/checkAdmin.middleware";
-import { ValidateVendor } from "../controllers/vendors/validate.controller";
-import { upload } from "../middlewares/upload.middleware";
+import express from "express";
+import { GetVendor, GetVendors } from "../controllers/vendors/get.controller.ts";
+import { RequestToBeVendor } from "../controllers/vendors/request.controller.ts";
+import { CheckAdmin } from "../middlewares/checkAdmin.middleware.ts";
+import { ValidateVendor } from "../controllers/vendors/validate.controller.ts";
+import { upload } from "../middlewares/upload.middleware.ts";
+import { CreateSubaccount, GetBanks } from "../controllers/vendors/subaccount.controller.ts";
+import { AuthMiddleware } from "../middlewares/auth.middleware.ts";
 
-const router = Router();
+const router = express.Router();
+
+// Subaccount Routes
+router.post("/payout-settings", AuthMiddleware, CreateSubaccount);
+router.get("/banks", GetBanks);
 
 router.route("/")
         .post(

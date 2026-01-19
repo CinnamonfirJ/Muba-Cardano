@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
-import Cart from "../../models/cart.model";
-import Products from "../../models/products.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Cart from "../../models/cart.model.ts";
+import Products from "../../models/products.model.ts";
 
 export const AddToCart = async (req: Request, res: Response) => {
     const { _id, user_id } = req.body;
@@ -43,16 +44,9 @@ export const AddToCart = async (req: Request, res: Response) => {
             store: item.store,
         });
 
-        // If quantity passed in body, set it (or add it?)
-        // Standard e-com behavior: "Add to Cart" usually adds +Qty.
-        // User payload usually has quantity. 
+        // If quantity passed in body, set it
         if (req.body.quantity && req.body.quantity > 1) {
-             cart.quantity = req.body.quantity; 
-             // If we want to ADD, we would do cart.quantity += (req.body.quantity - 1) since we pushed 1.
-             // But usually payload is "I want 5".
-             // Let's assume SET logic for new item, or ADD logic?
-             // "User ordered multiple quantities" -> implies they selected 6, clicked Add.
-             // So we should set to 6.
+             cart.quantity = req.body.quantity;
              await cart.save();
         }
 

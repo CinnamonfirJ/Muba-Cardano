@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
-import Stores from "../../models/stores.model";
-import Users from "../../models/users.model";
-import { uploadToCloudinary } from "../../middlewares/upload.middleware";
+import express from "express";
+import type { Request, Response } from "express";
+import Stores from "../../models/stores.model.ts";
+import Users from "../../models/users.model.ts";
+import { uploadToCloudinary } from "../../middlewares/upload.middleware.ts";
 import mongoose from "mongoose";
 
 export const CreateStore = async (req: Request, res: Response) => {
@@ -144,3 +145,6 @@ export const CreateStore = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+

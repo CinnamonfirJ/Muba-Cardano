@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import Cart from "../../models/cart.model";
+import express from "express";
+import type { Request, Response } from "express";
+import Cart from "../../models/cart.model.ts";
 
 export const decreaseQty = async (req: Request, res: Response) => {
     const _id = req.params._id || req.body._id;
@@ -36,3 +37,5 @@ export const decreaseQty = async (req: Request, res: Response) => {
         return res.status(500).json({ message: `Internal Server Error ${err}`});
     }
 }
+
+

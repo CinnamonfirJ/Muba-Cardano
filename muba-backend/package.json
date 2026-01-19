@@ -1,12 +1,14 @@
 {
   "name": "muba_backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Campus Based E-Commerce Platform",
   "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index",
     "seed": "ts-node src/seeds/seed.ts",
+    "clean": "ts-node src/seeds/clean_seed.ts",
     "build": "tsc",
     "dev": "nodemon src/index"
   },

@@ -7,12 +7,14 @@ export const DELIVERY_OPTIONS = {
   SCHOOL_POST: "school_post",
   SELF: "self",
   RIDER: "rider",
+  PEER_TO_PEER: "peer_to_peer",
 } as const;
 
 export const DELIVERY_FEES = {
   school_post: 500, // Campus post office delivery (Matches Frontend)
   self: 0, // Self-pickup
   rider: 2000, // Third-party rider delivery
+  peer_to_peer: 0, // Peer-to-peer delivery
 } as const;
 
 /**
@@ -30,6 +32,8 @@ export const calculateDeliveryFee = (
       return DELIVERY_FEES.self;
     case DELIVERY_OPTIONS.RIDER:
       return DELIVERY_FEES.rider;
+    case DELIVERY_OPTIONS.PEER_TO_PEER:
+      return DELIVERY_FEES.peer_to_peer;
     default:
       // Default to school post if invalid option
       console.warn(
@@ -50,6 +54,8 @@ export const getDeliveryOptionLabel = (option: string): string => {
       return "Self Pickup";
     case DELIVERY_OPTIONS.RIDER:
       return "Rider Delivery";
+    case DELIVERY_OPTIONS.PEER_TO_PEER:
+      return "Peer-to-Peer (Direct)";
     default:
       return option;
   }

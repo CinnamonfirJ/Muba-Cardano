@@ -1,4 +1,5 @@
-import { NextFunction, Request, Response } from "express";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
 
 export const CheckVendor = async (
   req: Request,
@@ -21,3 +22,5 @@ export const CheckVendor = async (
     return res.status(500).json({ message: `Internal Server Error: ${err}` });
   }
 };
+
+

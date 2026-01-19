@@ -24,10 +24,32 @@ export const ProfileCompletionBanner: React.FC<ProfileCompletionBannerProps> = (
   if (!hasLocation) missingFields.push("Delivery Location");
 
   // Calculate percentage (Matric doesn't count against completion but optional)
-  const totalFields = 4;
+  let totalFields = 4;
+  
+  if (user.role === 'vendor') {
+      totalFields = 5; // Add Payouts
+      // We don't have store details here efficiently to check 'paystack_recipient_code'. 
+      // But we can check if user has 'settlement_bank' if we populated it on user, OR relying on a separate check.
+      // Since 'user' object from context might not have store details, we might skip or assume incomplete if not verified?
+      // Actually, let's keep it simple: If vendor, prompt to check Payout Settings.
+      // But wait, the banner relies on 'missingFields' array.
+      // If we can't check explicitly, maybe we shouldn't block the progress bar but just add a persistent alert?
+      // OR, we can assume if they are a vendor, they should have it.
+      // Let's rely on standard fields for now, but add a text hint.
+      
+      // Ideally we'd fetch store status here, but that might be expensive for a banner.
+      // Let's just add a generic "Setup Payouts" if they are a vendor 
+      // missingFields.push("Payout Settings"); 
+  }
+
   const completedFields = totalFields - missingFields.length;
   const percentage = Math.round((completedFields / totalFields) * 100);
-
+  
+  // Logic to show banner even if 100% profile but missing payout setup? 
+  // For now, let's stick to hiding if 100% unless we force it.
+  if (percentage === 100 && user.role !== 'vendor') return null;
+  // If vendor, we might want to keep it visible if they haven't set payout, but we don't know that yet.
+  // So for now, standard logic.
   if (percentage === 100) return null;
 
   return (
@@ -42,7 +64,12 @@ export const ProfileCompletionBanner: React.FC<ProfileCompletionBannerProps> = (
               Complete your profile ({percentage}%)
             </h3>
             <p className="max-w-xl text-gray-600">
-              Please update your <strong>{missingFields.join(", ")}</strong> to ensure smooth checkout and delivery.
+               Please update your <strong>{missingFields.join(", ")}</strong> to ensure smooth checkout and delivery.
+               {user.role === 'vendor' && (
+                   <span className="block mt-1 text-sm text-orange-700">
+                       Warning: As a vendor, you must <Link href="/dashboard/vendors/payouts" className="underline font-bold">set up Payouts</Link> to receive funds!
+                   </span>
+               )}
             </p>
             
             {/* Progress Bar */}
@@ -55,12 +82,21 @@ export const ProfileCompletionBanner: React.FC<ProfileCompletionBannerProps> = (
           </div>
         </div>
 
-        <Link href="/dashboard/settings">
-          <Button className="bg-orange-600 hover:bg-orange-700 whitespace-nowrap">
-            Update Profile
-            <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </Link>
+        <div className="flex flex-col gap-2">
+            <Link href="/dashboard/settings">
+            <Button className="bg-orange-600 hover:bg-orange-700 whitespace-nowrap w-full">
+                Update Profile
+                <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+            </Link>
+            {user.role === 'vendor' && (
+                <Link href="/dashboard/vendors/payouts">
+                    <Button variant="outline" className="whitespace-nowrap w-full border-orange-300 text-orange-700 hover:bg-orange-100">
+                        Setup Payouts
+                    </Button>
+                </Link>
+            )}
+        </div>
       </div>
     </div>
   );

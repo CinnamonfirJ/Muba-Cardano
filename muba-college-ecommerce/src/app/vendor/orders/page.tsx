@@ -106,6 +106,8 @@ export default function VendorOrdersPage() {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="order_confirmed">Order Confirmed</SelectItem>
+            <SelectItem value="shipped">Shipped</SelectItem>
+            <SelectItem value="dispatched">Dispatched</SelectItem>
             <SelectItem value="handed_to_post_office">Handed to Post Office</SelectItem>
             <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
