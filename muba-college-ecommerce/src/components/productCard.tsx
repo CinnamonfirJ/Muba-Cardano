@@ -18,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { productService, type Product } from "../services/productService";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { getDisplayPrice, SERVICE_FEE_THRESHOLD, SERVICE_FEE_AMOUNT } from "@/utils/paymentSplit.util";
 
 interface ProductCardProps {
   item: Product;
@@ -173,15 +174,22 @@ export const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                 </span>
               </div>
               <div className='flex items-center gap-2 sm:gap-4'>
-                <div className='flex items-center gap-1 sm:gap-2'>
-                  <span className='font-bold text-[#3bb85e] text-base sm:text-xl'>
-                    ₦{item.price.toLocaleString()}
-                  </span>
-                  {item.originalPrice && (
-                    <span className='text-neutral-500 text-xs sm:text-sm line-through'>
-                      ₦{item.originalPrice.toLocaleString()}
+                <div className='flex flex-col'>
+                  <div className='flex items-center gap-1 sm:gap-2'>
+                    <span className='font-bold text-[#3bb85e] text-base sm:text-xl'>
+                      ₦{getDisplayPrice(item.price).toLocaleString()}
                     </span>
-                  )}
+                    {item.originalPrice && (
+                      <span className='text-neutral-500 text-xs sm:text-sm line-through'>
+                        ₦{item.originalPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {/* {item.price >= SERVICE_FEE_THRESHOLD && (
+                    <span className='text-gray-400 text-[10px]'>
+                      (₦{item.price.toLocaleString()} + ₦{SERVICE_FEE_AMOUNT} fee)
+                    </span>
+                  )} */}
                 </div>
                 {item.condition && (
                   <Badge variant='outline' className='text-xs'>
@@ -282,15 +290,22 @@ export const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
               {item.rating} ({item.reviews})
             </span>
           </div>
-          <div className='flex items-center gap-1 sm:gap-2'>
-            <span className='font-bold text-[#3bb85e] text-base sm:text-lg'>
-              ₦{item.price.toLocaleString()}
-            </span>
-            {item.originalPrice && (
-              <span className='hidden sm:flex text-neutral-500 text-xs sm:text-sm line-through'>
-                ₦{item.originalPrice.toLocaleString()}
+          <div className='flex flex-col'>
+            <div className='flex items-center gap-1 sm:gap-2'>
+              <span className='font-bold text-[#3bb85e] text-base sm:text-lg'>
+                ₦{getDisplayPrice(item.price).toLocaleString()}
               </span>
-            )}
+              {item.originalPrice && (
+                <span className='hidden sm:flex text-neutral-500 text-xs sm:text-sm line-through'>
+                  ₦{item.originalPrice.toLocaleString()}
+                </span>
+              )}
+            </div>
+            {/* {item.price >= SERVICE_FEE_THRESHOLD && (
+              <span className='text-gray-400 text-[10px]'>
+                (₦{item.price.toLocaleString()} + ₦{SERVICE_FEE_AMOUNT} fee)
+              </span>
+            )} */}
           </div>
           <div className='hidden sm:flex gap-2 mb-3 sm:mb-4 text-neutral-600 text-xs sm:text-sm'>
             <div className='font-medium'>by {item.store.name}</div>

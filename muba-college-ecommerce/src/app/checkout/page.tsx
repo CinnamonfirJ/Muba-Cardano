@@ -28,7 +28,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { calculateSplit } from "@/utils/paymentSplit.util";
+import { calculateCartPricing, SERVICE_FEE_AMOUNT } from "@/utils/paymentSplit.util";
 import paymentService from "@/services/paymentService";
 import ExpandableTitle from "@/components/ExpandableTitle";
 
@@ -61,9 +61,9 @@ const CheckoutPage = () => {
     }
   }, [user]);
 
-  const split = calculateSplit(cartState.total);
-  const finalTotal = cartState.total;
-  const serviceFee = split.platform_fee;
+  const cartPricing = calculateCartPricing(cartState.total);
+  const finalTotal = cartPricing.total;
+  const serviceFee = cartPricing.serviceFee;
 
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity === 0) {
@@ -237,7 +237,23 @@ const CheckoutPage = () => {
             <Card className='top-4 sticky'>
               <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
               <CardContent className='space-y-4'>
-                <div className='space-y-2'><div className='flex justify-between text-sm'><span>Subtotal ({cartState.itemCount} items)</span><span>₦{cartState.total.toLocaleString()}</span></div><div className='flex justify-between text-sm italic text-gray-500'><span>Service Fee (Included)</span><span>₦{serviceFee.toLocaleString()}</span></div><Separator /><div className='flex justify-between font-bold text-lg'><span>Total</span><span className='text-[#3bb85e]'>₦{finalTotal.toLocaleString()}</span></div></div>
+                <div className='space-y-2'>
+                  <div className='flex justify-between text-sm'>
+                    <span>Subtotal ({cartState.itemCount} items)</span>
+                    <span>₦{cartState.total.toLocaleString()}</span>
+                  </div>
+                  {cartPricing.serviceFeeApplies && (
+                    <div className='flex justify-between text-sm text-gray-600'>
+                      <span>Service Fee</span>
+                      <span>₦{SERVICE_FEE_AMOUNT.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <Separator />
+                  <div className='flex justify-between font-bold text-lg'>
+                    <span>Total</span>
+                    <span className='text-[#3bb85e]'>₦{finalTotal.toLocaleString()}</span>
+                  </div>
+                </div>
                 <div className='bg-blue-50 p-4 border border-blue-100 rounded-xl flex items-start gap-3'><Shield className='w-5 h-5 text-blue-600 mt-1' /><div><p className='font-bold text-blue-900 text-sm'>Buyer Protection</p><p className='text-blue-700 text-xs mt-1 leading-relaxed'>Funds are held in escrow until delivery is confirmed. 100% money-back guarantee.</p></div></div>
               </CardContent>
             </Card>

@@ -1,5 +1,4 @@
-import pkg from "mongoose";
-const { Types } = pkg;
+import { Types } from "mongoose";
 
 export type InteractionType = "view" | "cart" | "like" | "purchase";
 

@@ -37,6 +37,12 @@ const CartSchema = new Schema<CartTypes>({
       type: Number,
       required: true,
     },
+    variant_details: {
+        name: String,
+        options: [String],
+        sku: String,
+        attributes: { type: Map, of: String }
+    },
     store: {
       type: Schema.Types.ObjectId,
       ref: "Stores",
@@ -49,7 +55,3 @@ const CartSchema = new Schema<CartTypes>({
 const Cart = models.Cart || model<CartTypes>("Cart", CartSchema);
 
 export default Cart;
-
-
-
-

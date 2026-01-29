@@ -21,7 +21,7 @@ import {
     SelectTrigger, 
     SelectValue 
 } from "@/components/ui/select";
-import { Loader2, Banknote, AlertCircle, CheckCircle, History, ShieldCheck, XCircle } from "lucide-react";
+import { Loader2, Banknote, AlertCircle, CheckCircle, History, ShieldCheck, XCircle, AlertTriangle, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import payoutService from "@/services/payoutService";
 import Link from "next/link";
@@ -34,11 +34,19 @@ export default function VendorPayoutsPage() {
     // Form State
     const [accountNumber, setAccountNumber] = useState("");
     const [selectedBank, setSelectedBank] = useState("");
+    const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
     
     // Fetch Store Details
     const { data: store, isLoading: isStoreLoading } = useQuery({
         queryKey: ["vendorStore"],
         queryFn: getVendorStore,
+    });
+
+    // Fetch Payout Status
+    const { data: payoutStatus, isLoading: isStatusLoading } = useQuery({
+        queryKey: ["payoutStatus", store?._id],
+        queryFn: () => payoutService.getPayoutStatus(store._id),
+        enabled: !!store?._id,
     });
 
     // Fetch User Profile for Gating Checklist
@@ -65,23 +73,63 @@ export default function VendorPayoutsPage() {
         fetchBanks();
     }, []);
 
+    // Sync Form with Status/Store Data
     useEffect(() => {
-        if (store) {
+        if (payoutStatus?.data) {
+            // Prefer live Paystack details if available
+            const { account_number, paystack_details } = payoutStatus.data;
+            if (account_number) setAccountNumber(account_number);
+            
+            // For bank code, we rely on our stored settlement_bank if available, 
+            // as Paystack details might return bank name or different format.
+            if (store?.settlement_bank) setSelectedBank(store.settlement_bank);
+        } else if (store) {
             if (store.account_number) setAccountNumber(store.account_number);
             if (store.settlement_bank) setSelectedBank(store.settlement_bank);
         }
-    }, [store]);
+    }, [payoutStatus, store]);
 
     const saveSettingsMutation = useMutation({
         mutationFn: async (data: any) => {
             return await payoutService.savePayoutSettings(store?._id, data);
         },
         onSuccess: (data: any) => {
-            toast.success(`Subaccount Created: ${data.data.subaccount_code}`);
+            toast.success(data.message || "Payout settings saved");
             queryClient.invalidateQueries({ queryKey: ["vendorStore"] });
+            queryClient.invalidateQueries({ queryKey: ["payoutStatus"] });
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to setup payouts");
+        }
+    });
+
+    const verifyMutation = useMutation({
+        mutationFn: async () => {
+             return await payoutService.requestVerification(store?._id);
+        },
+        onSuccess: () => {
+             toast.success("Verification request sent! Check your email.");
+             queryClient.invalidateQueries({ queryKey: ["payoutStatus"] });
+        },
+        onError: (error: any) => {
+             toast.error(error.response?.data?.message || "Failed to request verification");
+        }
+    });
+
+    const deactivateMutation = useMutation({
+        mutationFn: async () => {
+             return await payoutService.deactivateSubaccount(store?._id);
+        },
+        onSuccess: () => {
+             toast.success("Payout account deactivated.");
+             queryClient.invalidateQueries({ queryKey: ["vendorStore"] });
+             queryClient.invalidateQueries({ queryKey: ["payoutStatus"] });
+             setAccountNumber("");
+             setSelectedBank("");
+             setShowDeactivateConfirm(false);
+        },
+        onError: (error: any) => {
+             toast.error(error.response?.data?.message || "Failed to deactivate");
         }
     });
 
@@ -103,7 +151,7 @@ export default function VendorPayoutsPage() {
         });
     };
 
-    if (isStoreLoading || isUserLoading) {
+    if (isStoreLoading || isUserLoading || isStatusLoading) {
         return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[#3bb85e]" /></div>;
     }
 
@@ -111,7 +159,11 @@ export default function VendorPayoutsPage() {
         return <div className="p-10 text-center">You do not have a store yet.</div>;
     }
 
-    const isPayoutReady = !!(store.paystack_subaccount_code && user?.phone && user?.matric_number);
+    const statusData = payoutStatus?.data || {};
+    const hasSubaccount = statusData.has_subaccount;
+    const isPayoutReady = statusData.payout_ready;
+    const isVerificationRequested = statusData.verification_requested;
+    const paystackDetails = statusData.paystack_details; // Live details
 
     return (
         <div className="space-y-6 pb-20 p-4 max-w-5xl mx-auto">
@@ -125,15 +177,22 @@ export default function VendorPayoutsPage() {
                         Configure your settlement account for automated split payments.
                     </p>
                 </div>
-                {isPayoutReady ? (
-                    <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full border border-green-100 animate-in fade-in zoom-in duration-500">
-                        <ShieldCheck className="w-5 h-5" />
-                        <span className="font-bold text-sm uppercase tracking-wider">Eligible to Sell</span>
-                    </div>
+                {hasSubaccount ? (
+                    isPayoutReady ? (
+                        <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full border border-green-100 animate-in fade-in zoom-in duration-500">
+                            <ShieldCheck className="w-5 h-5" />
+                            <span className="font-bold text-sm uppercase tracking-wider">Verified & Active</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full border border-amber-100">
+                            <AlertTriangle className="w-5 h-5" />
+                            <span className="font-bold text-sm uppercase tracking-wider">Verification Pending</span>
+                        </div>
+                    )
                 ) : (
-                    <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-full border border-red-100">
+                    <div className="flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full border border-gray-200">
                         <XCircle className="w-5 h-5" />
-                        <span className="font-bold text-sm uppercase tracking-wider">Not Eligible to Sell</span>
+                        <span className="font-bold text-sm uppercase tracking-wider">No Payout Account</span>
                     </div>
                 )}
             </div>
@@ -147,7 +206,7 @@ export default function VendorPayoutsPage() {
                     {[
                         { label: "Phone Number", status: !!user?.phone, link: "/dashboard/settings" },
                         { label: "Matric Number", status: !!user?.matric_number, link: "/dashboard/settings" },
-                        { label: "Paystack Subaccount", status: !!store.paystack_subaccount_code, link: null }
+                        { label: "Paystack Subaccount", status: hasSubaccount, link: null }
                     ].map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
                             <div className="flex items-center gap-3">
@@ -176,7 +235,11 @@ export default function VendorPayoutsPage() {
                 <Card className="md:col-span-7 border-gray-200 shadow-sm rounded-3xl overflow-hidden border-none bg-white">
                     <CardHeader className="bg-gray-50/50 border-b border-gray-100">
                         <CardTitle>Bank Details</CardTitle>
-                        <CardDescription>Setup your Paystack Subaccount for real-time settlements.</CardDescription>
+                        <CardDescription>
+                            {hasSubaccount 
+                                ? "Update your settlement account details." 
+                                : "Setup your Paystack Subaccount for real-time settlements."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 p-6">
                         <div className="space-y-2">
@@ -216,9 +279,9 @@ export default function VendorPayoutsPage() {
                             disabled={saveSettingsMutation.isPending || !user?.phone || !user?.matric_number}
                         >
                             {saveSettingsMutation.isPending ? (
-                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating Subaccount...</>
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {hasSubaccount ? "Updating Details..." : "Creating Account..."}</>
                             ) : (
-                                "Connect & Activate Store"
+                                hasSubaccount ? "Update Bank Details" : "Create Payout Account"
                             )}
                         </Button>
 
@@ -228,20 +291,99 @@ export default function VendorPayoutsPage() {
                             </p>
                         ) : null}
 
-                        {store.paystack_subaccount_code && (
-                             <div className="bg-[#3bb85e]/5 text-[#3bb85e] p-5 rounded-2xl border border-[#3bb85e]/10 flex items-start gap-3 mt-4 animate-in slide-in-from-bottom-2 duration-500">
-                                <CheckCircle className="w-6 h-6 shrink-0" />
-                                <div>
-                                    <p className="font-black text-sm uppercase tracking-tight">Active Subaccount</p>
-                                    <p className="text-xs font-bold opacity-80 mt-1">{store.bank_name} • ****{store.account_number?.slice(-4)}</p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <code className="bg-white/60 px-2 py-0.5 rounded text-[10px] font-mono border border-[#3bb85e]/20">{store.paystack_subaccount_code}</code>
-                                        <span className="text-[10px] font-black uppercase bg-[#3bb85e] text-white px-2 py-0.5 rounded">Verified</span>
+                        {hasSubaccount && (
+                             <div className={`p-5 rounded-2xl border flex items-start gap-3 mt-4 animate-in slide-in-from-bottom-2 duration-500
+                                ${isPayoutReady ? "bg-[#3bb85e]/5 text-[#3bb85e] border-[#3bb85e]/10" : "bg-amber-50 text-amber-700 border-amber-100"}
+                             `}>
+                                {isPayoutReady ? <CheckCircle className="w-6 h-6 shrink-0" /> : <AlertTriangle className="w-6 h-6 shrink-0" />}
+                                <div className="space-y-2 w-full">
+                                    <div>
+                                        <p className="font-black text-sm uppercase tracking-tight">
+                                            {isPayoutReady ? "Active Subaccount" : "Verification Required"}
+                                        </p>
+                                        <div className="flex flex-col gap-1 mt-1">
+                                            <p className="text-xs font-bold opacity-80">
+                                                {selectedBank ? banks.find(b => b.code === selectedBank)?.name : "Bank"} • ****{accountNumber.slice(-4)}
+                                            </p>
+                                            {paystackDetails?.business_name && (
+                                                <p className="text-[10px] font-mono opacity-70 bg-black/5 w-fit px-1 rounded">
+                                                    {paystackDetails.business_name}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
+                                    
+                                    {!isPayoutReady && (
+                                        <div className="mt-3 bg-white/50 p-3 rounded-lg border border-amber-200/50">
+                                            <p className="text-xs font-medium mb-3">
+                                                To ensure platform safety, your products are <strong>hidden</strong> until this account is verified by our admins.
+                                            </p>
+                                            {isVerificationRequested ? (
+                                                <Button disabled variant="secondary" size="sm" className="w-full text-xs font-bold h-8">
+                                                    <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Verification Status: Review in Progress
+                                                </Button>
+                                            ) : (
+                                                <Button 
+                                                    onClick={() => verifyMutation.mutate()} 
+                                                    disabled={verifyMutation.isPending}
+                                                    size="sm" 
+                                                    className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold h-8"
+                                                >
+                                                    {verifyMutation.isPending ? "Requesting..." : "Request Account Verification"}
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                              </div>
                         )}
                     </CardContent>
+
+                    {/* Delete Zone */}
+                    {hasSubaccount && (
+                        <div className="bg-red-50/50 border-t border-red-100 p-4">
+                            {!showDeactivateConfirm ? (
+                                <div className="flex justify-between w-full items-center">
+                                     <div className="text-xs text-red-600 font-medium">
+                                        No longer using this account?
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setShowDeactivateConfirm(true)}
+                                        className="text-red-500 hover:text-red-600 hover:bg-red-100 font-bold text-xs uppercase"
+                                    >
+                                        <Trash2 className="w-3 h-3 mr-2" /> Deactivate
+                                    </Button>
+                                </div>
+                            ) : (
+                                 <div className="flex flex-col sm:flex-row justify-between w-full items-center gap-3 animate-in fade-in slide-in-from-right-5">
+                                     <div className="text-xs text-red-600 font-bold">
+                                        Are you sure? This will disable payouts and hide products.
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => setShowDeactivateConfirm(false)}
+                                            className="text-gray-500 text-xs"
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button 
+                                            variant="destructive" 
+                                            size="sm" 
+                                            onClick={() => deactivateMutation.mutate()}
+                                            disabled={deactivateMutation.isPending}
+                                            className="text-xs font-bold"
+                                        >
+                                            {deactivateMutation.isPending ? "Deactivating..." : "Confirm Deactivate"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </Card>
 
                 {/* Information Card */}
@@ -258,15 +400,12 @@ export default function VendorPayoutsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm font-medium">
                             <p className="bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/10">
-                                <strong>Automatic Payouts</strong><br/>
-                                Funds are automatically split and settled to your bank account via Paystack as soon as delivery is confirmed.
+                                <strong>Strict Verification</strong><br/>
+                                Vendors must have a verified Paystack subaccount to list products. This ensures safety for all buyers.
                             </p>
                             <p className="bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/10">
-                                <strong>Platform Fee (2.5%)</strong><br/>
-                                A small platform fee is deducted from the subtotal to keep the marketplace safe and running.
-                            </p>
-                            <p className="bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/10 text-xs opacity-90">
-                                <strong>Escrow Policy:</strong> Funds are held by Paystack until the buyer confirms receipt of the item.
+                                <strong>Direct Payouts</strong><br/>
+                                Funds are routed directly to your subaccount. Platform fees are deducted automatically.
                             </p>
                         </CardContent>
                     </Card>

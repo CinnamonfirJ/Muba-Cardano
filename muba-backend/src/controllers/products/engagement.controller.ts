@@ -2,6 +2,7 @@ import express from "express";
 import type { Request, Response, RequestHandler } from "express";
 import Users from "../../models/users.model.ts";
 import Products from "../../models/products.model.ts";
+import Interactions from "../../models/interactions.model.ts";
 
 /**
  * Toggle Like/Favorite for a product
@@ -43,13 +44,12 @@ export const ToggleLikeProduct: RequestHandler = async (req: any, res: any) => {
             });
 
             // Log like interaction
-            const Interactions = (await import("../../models/interactions.model")).default;
             Interactions.create({
                 userId: userId,
                 productId: product._id,
                 interactionType: "like",
                 category: Array.isArray(product.category) ? product.category[0] : (product.category as any)
-            }).catch(err => console.error("Error logging like interaction:", err));
+            }).catch((err: any) => console.error("Error logging like interaction:", err));
 
             return res.status(200).json({ message: "Added to favorites", liked: true });
         }

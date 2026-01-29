@@ -5,7 +5,7 @@ import nodemailer from "nodemailer"
 export const SendEmail = async ({ email, title, html }: SendEmailTypes) => {
     const transporter = nodemailer.createTransport({
         service: "gmail",
-        port: 587,               // REQUIRED
+        port: 587,
         secure: false,
         auth: {
             user: emailConfig.email,
@@ -24,10 +24,13 @@ export const SendEmail = async ({ email, title, html }: SendEmailTypes) => {
     }
 
     try {
-        const mail = transporter.sendMail(mailOptions)
+        const info = await transporter.sendMail(mailOptions);
+        return info;
     } catch (err) {
-        console.error(err);
-        return err
+        console.error("Email sending failed:", err);
+        // We throw the error so the caller can decide how to handle it, 
+        // or we return a failed status. For now, let's return null to indicate failure.
+        return null;
     }
 }
 

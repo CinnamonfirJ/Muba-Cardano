@@ -37,15 +37,22 @@ const PaymentIntentSchema = new Schema(
             quantity: Number,
             price: Number,
             name: String,
-            img: []
+            img: [],
+            variant_selected: {
+                name: String,
+                options: [String],
+                sku: String,
+                attributes: { type: Map, of: String }
+            }
         }
     ],
     vendor_splits: [
         {
             store_id: { type: Schema.Types.ObjectId, ref: "Stores" },
             subaccount: String,
-            amount: Number, // in Naira
-            share: Number // in Kobo
+            amount: Number, // Vendor amount in Naira
+            share: Number,  // Order subtotal in Kobo
+            platform_fee: Number // Platform fee for this vendor in Naira
         }
     ],
     shipping_info: {

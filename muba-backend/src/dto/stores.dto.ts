@@ -17,6 +17,10 @@ export interface StoreTypes {
   reviews?: string[];
   categories?: string[];
   products?: Types.ObjectId[];
+  // Payout Safety Gating
+  payout_ready?: boolean;
+  verification_requested?: boolean;
+  verification_requested_at?: Date;
   lastActive?: Date;
   createdAt?: Date;
   updatedAt?: Date;

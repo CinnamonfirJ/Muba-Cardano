@@ -84,6 +84,21 @@ const StoresSchema = new Schema<StoreTypes>(
     //   type: String,
     //   default: "",
     // },
+
+    // === PAYOUT SAFETY GATING ===
+    // Products are ONLY visible when payout_ready = true
+    payout_ready: {
+      type: Boolean,
+      default: false, // Becomes true when Paystack subaccount is verified
+    },
+    verification_requested: {
+      type: Boolean,
+      default: false, // True when vendor clicks "Verify Account"
+    },
+    verification_requested_at: {
+      type: Date, // Timestamp when verification was requested
+    },
+
     lastActive: {
       type: Date,
       default: Date.now,

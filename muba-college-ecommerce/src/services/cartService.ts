@@ -22,6 +22,12 @@ export const cartService = {
       price: product.price,
       store: product.store?._id || product.store,
       variants,
+      variant_details: variants && Object.keys(variants).length > 0 ? {
+          name: Object.values(variants).join(" / "),
+          options: Object.values(variants),
+          sku: product.sku,
+          attributes: variants
+      } : undefined
     });
     return response.data;
   },

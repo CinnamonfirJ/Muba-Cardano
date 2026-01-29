@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import Products from "../../models/products.model.ts";
 import type { ProductTypes } from "../../dto/products.dto.ts";
 import { getEligibleStoreIds } from "../../utils/vendorGating.util.ts";
+import Stores from "../../models/stores.model.ts";
 
 export const GetProducts = async (req: Request, res: Response) => {
   try {
@@ -132,9 +133,11 @@ export const GetProduct = async (req: Request, res: Response) => {
     // 🎯 Marketplace Gating: Verify store is ready
     const storeObj = products.store as any;
     const ownerObj = storeObj?.owner as any;
-    if (!storeObj?.paystack_subaccount_code || !ownerObj?.phone || !ownerObj?.matric_number) {
+    
+    // Safety Gate: Must be payout_ready (verified)
+    if (!storeObj?.payout_ready || !ownerObj?.phone || !ownerObj?.matric_number) {
         return res.status(403).json({ 
-            message: "This vendor is temporarily unavailable. Payout profile pending setup." 
+            message: "This vendor is temporarily unavailable. Payout profile pending setup or verification." 
         });
     }
 
@@ -196,6 +199,16 @@ export const GetProductsByStore = async (req: Request, res: Response) => {
 
     if (rating) {
       query.rating = { $gte: Number(rating) };
+    }
+
+    // 🎯 Marketplace Gating: Only show products from payout-ready stores
+    const store = await Stores.findById(storeId);
+    if (!store || !store.payout_ready) {
+        return res.status(200).json({
+            success: true,
+            data: [],
+            pagination: { total: 0, page: Number(page), limit: Number(limit), pages: 0, hasMore: false }
+        });
     }
 
     const skip = (Number(page) - 1) * Number(limit);

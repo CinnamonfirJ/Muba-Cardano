@@ -17,8 +17,15 @@ app.use(
       "http://localhost:3000",
       "https://muba-college-ecommerce.vercel.app",
     ],
-    methods: ["POST", "GET", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    methods: ["POST", "GET", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Cookie",
+      "Origin",
+      "X-Requested-With",
+      "Accept",
+    ],
     credentials: true,
   })
 );

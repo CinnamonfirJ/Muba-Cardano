@@ -31,7 +31,13 @@ const VendorOrderSchema = new Schema(
         price: Number,
         name: String,
         img: [],
-        variant: String, // Optional variant info
+        variant: String, // Legacy string
+        variant_selected: {
+            name: String,
+            options: [String],
+            sku: String,
+            attributes: { type: Map, of: String }
+        }
       },
     ],
     delivery_option: {

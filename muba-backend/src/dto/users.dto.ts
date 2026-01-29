@@ -1,5 +1,4 @@
-import pkg from "mongoose";
-const { Types } = pkg;
+import { Types } from "mongoose";
 
 type RoleTypes = "user" | "vendor" | "admin" | "post_office" | "post_office_member";
 type VendorStatusTypes = "none" | "pending" | "accepted" | "rejected";

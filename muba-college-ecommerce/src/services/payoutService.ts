@@ -36,6 +36,25 @@ export const payoutService = {
     });
     return response.data;
   },
+
+  async getPayoutStatus(storeId: string) {
+    const response = await api.get(`/api/v1/vendors/payout-status/${storeId}`);
+    return response.data;
+  },
+
+  async requestVerification(storeId: string) {
+    const response = await api.post("/api/v1/vendors/request-payout-verification", {
+      storeId,
+    });
+    return response.data;
+  },
+
+  async deactivateSubaccount(storeId: string) {
+     const response = await api.delete("/api/v1/vendors/payout-settings", {
+         data: { storeId }
+     });
+     return response.data;
+  }
 };
 
 export default payoutService;

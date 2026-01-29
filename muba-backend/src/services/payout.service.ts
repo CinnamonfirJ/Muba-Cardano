@@ -5,7 +5,9 @@ import { toKobo } from "../utils/currency.util.ts";
 
 /**
  * NOTE: Manual payout initiation via Transfer API is DEPRECATED.
- * All payouts are now handled automatically via Paystack Split Payments.
+ * All payouts are now handled automatically via Paystack Subaccount Charging.
+ * When a transaction is initialized with `subaccount` and `transaction_charge`,
+ * Paystack automatically settles funds to the vendor's bank account.
  * This service is kept for audit/logging or potential manual refund overrides for admins.
  */
 

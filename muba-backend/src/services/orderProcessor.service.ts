@@ -67,7 +67,8 @@ export const createPendingOrder = async (intentId: string) => {
                 quantity: i.quantity,
                 price: i.price,
                 name: i.name,
-                img: i.img
+                img: i.img,
+                variant_selected: i.variant_selected
             })),
             delivery_option: intent.shipping_info?.deliveryMethod || "school_post",
             delivery_fee: 0,

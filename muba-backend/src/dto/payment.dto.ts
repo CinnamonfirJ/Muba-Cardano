@@ -1,5 +1,4 @@
-import pkg from "mongoose";
-const { Types, Schema } = pkg;
+import { Types, Schema } from "mongoose";
 
 export interface PaymentType {
     _id: string;

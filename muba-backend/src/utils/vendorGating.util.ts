@@ -4,6 +4,10 @@ import { Types } from "mongoose";
 /**
  * Returns an array of Store IDs that are eligible to sell.
  */
+/**
+ * Returns an array of Store IDs that are eligible to sell.
+ * CRITICAL SAFETY: Only shows stores where payout_ready is true.
+ */
 export const getEligibleStoreIds = async (): Promise<Types.ObjectId[]> => {
     const eligibleStores = await Stores.aggregate([
         {
@@ -17,7 +21,7 @@ export const getEligibleStoreIds = async (): Promise<Types.ObjectId[]> => {
         { $unwind: "$ownerDetails" },
         {
             $match: {
-                paystack_subaccount_code: { $exists: true, $ne: "" },
+                payout_ready: true, // Safety Gate
                 "ownerDetails.phone": { $exists: true, $ne: "" },
                 "ownerDetails.matric_number": { $exists: true, $ne: "" }
             }
@@ -37,7 +41,9 @@ export const isStorePayoutReady = async (storeId: string): Promise<boolean> => {
 
     const owner = store.owner as any;
     
+    // Safety check: Payout must be explicitly ready
     return !!(
+        store.payout_ready && // Safety Gate
         store.paystack_subaccount_code &&
         owner?.phone &&
         owner?.matric_number &&

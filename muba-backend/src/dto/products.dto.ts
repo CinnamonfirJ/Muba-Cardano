@@ -1,5 +1,4 @@
-import pkg from "mongoose";
-const { Types } = pkg;
+import { Types } from "mongoose";
 
 export type ProductType = "single" | "variant" | "random" | "batch";
 
@@ -20,6 +19,14 @@ export interface CartTypes {
 
   // Store relation
   store: Types.ObjectId;
+
+  // Variant Metadata
+  variant_details?: {
+    name: string;
+    options: string[];
+    sku: string;
+    attributes: Record<string, string>;
+  };
 
   // Timestamps (added by mongoose)
   createdAt?: Date;

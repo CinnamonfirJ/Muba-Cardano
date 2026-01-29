@@ -34,6 +34,7 @@ import ExpandableTitle from "@/components/ExpandableTitle";
 import { productService, Product } from "@/services/productService";
 import VariantSelector from "@/components/product/VariantSelector";
 import { ProductReviews } from "@/components/reviews/ProductReviews";
+import { getDisplayPrice, SERVICE_FEE_THRESHOLD, SERVICE_FEE_AMOUNT } from "@/utils/paymentSplit.util";
 
 // Helper components
 const renderStars = (rating: number, size = "w-4 h-4") => {
@@ -144,7 +145,15 @@ export default function ProductDetailsPage() {
   const [touchEnd, setTouchEnd] = useState(0);
 
   // Computed Values
-  const productImages = product?.images || [];
+
+
+  // Computed Values
+  // Requirement: Show Variant-Specific Images
+  const displayImages = (selectedVariant?.images && selectedVariant.images.length > 0) 
+      ? selectedVariant.images 
+      : product?.images || [];
+      
+  const productImages = displayImages;
   const currentImage =
     productImages[currentImageIndex] ||
     "/placeholder.svg?height=600&width=600&text=Product";
@@ -208,21 +217,29 @@ export default function ProductDetailsPage() {
     // Construct cart item options
     const options: any = {};
     if (selectedVariant && selectedVariant.attributes) {
-        // Use structured attributes for cart
         Object.entries(selectedVariant.attributes).forEach(([key, value]) => {
-            options[key] = value;
+            options[key] = value as string;
         });
     } else if (selectedVariant) {
-        // Fallback for older data structure
         options[product.variantType || 'Variant'] = selectedVariant.name;
     }
 
+    // CRITICAL: Pass OVERRIDES to addItem so cart has snapshot
     await addItem({ 
         ...product, 
-        price: displayPrice,
-        sku: selectedVariant?.sku || product.sku 
+        price: displayPrice, // Variant price overrides base
+        sku: selectedVariant?.sku || product.sku,
+        images: displayImages, // Variant images override base
+        img: displayImages[0] || product.images[0] // Main thumb
     }, quantity, options);
   };
+  
+  // Reset image index when variant changes (so we don't show blank if variant has fewer images)
+  useEffect(() => {
+    if (selectedVariant) {
+        setCurrentImageIndex(0);
+    }
+  }, [selectedVariant]);
 
   // Safe getter helpers
   const getSellerInitials = () => {
@@ -538,38 +555,37 @@ export default function ProductDetailsPage() {
 
             {/* Price & Rating */}
             <div className='mb-8 mt-4'>
-              <div className='flex items-baseline gap-4 mb-2'>
-                <span className='font-medium text-gray-900 text-2xl lg:text-3xl'>
-                  ₦{displayPrice.toLocaleString()}
-                </span>
-                {product.originalPrice && !selectedVariant && (
-                  <span className='text-gray-400 text-lg line-through'>
-                    ₦{product.originalPrice.toLocaleString()}
+              <div className='flex flex-col gap-1 mb-2'>
+                <div className='flex items-baseline gap-4'>
+                  <span className='font-medium text-gray-900 text-2xl lg:text-3xl'>
+                    ₦{getDisplayPrice(displayPrice).toLocaleString()}
                   </span>
-                )}
-                {selectedVariant?.sku && (
-                  <span className='text-[10px] text-gray-400 font-mono ml-auto'>
-                    SKU: {selectedVariant.sku}
+                  {product.originalPrice && !selectedVariant && (
+                    <span className='text-gray-400 text-lg line-through'>
+                      ₦{product.originalPrice.toLocaleString()}
+                    </span>
+                  )}
+                  {selectedVariant?.sku && (
+                    <span className='text-[10px] text-gray-400 font-mono ml-auto'>
+                      SKU: {selectedVariant.sku}
+                    </span>
+                  )}
+                </div>
+                {displayPrice >= SERVICE_FEE_THRESHOLD && (
+                  <span className='text-gray-400 text-sm'>
+                    (₦{displayPrice.toLocaleString()} + ₦{SERVICE_FEE_AMOUNT} service fee)
                   </span>
                 )}
               </div>
 
               {/* Variant Selector */}
-              {product.productType === 'variant' && product.variants && product.variants.length > 0 && (
+              {/* Variant Selector */}
+              {(product.productType === 'variant' || product.productType === 'variable') && product.variants && product.variants.length > 0 && (
                   <div className="mb-8 border-t border-gray-100 pt-6">
                       <VariantSelector 
-                        variantType={product.variantType || "Custom"}
-                        variants={product.variants}
-                        onVariantSelect={(v) => {
-                            setSelectedVariant(v);
-                            // If variant has images, try to show the first one
-                            if (v?.images?.[0]) {
-                                const imgIndex = product.images.indexOf(v.images[0]);
-                                if (imgIndex !== -1) {
-                                    setCurrentImageIndex(imgIndex);
-                                }
-                            }
-                        }}
+                          variantType={product.variantType || "Custom"}
+                          variants={product.variants}
+                          onVariantSelect={setSelectedVariant}
                       />
                   </div>
               )}
@@ -731,10 +747,13 @@ export default function ProductDetailsPage() {
               <div className='flex items-center gap-4'>
                 <div className='flex-1'>
                   <div className='font-medium text-gray-900 text-base'>
-                    ₦{displayPrice.toLocaleString()}
+                    ₦{getDisplayPrice(displayPrice).toLocaleString()}
                   </div>
-                  <div className='text-gray-400 text-[10px] line-through'>
-                    {product.originalPrice && `₦${product.originalPrice.toLocaleString()}`}
+                  <div className='text-gray-400 text-[10px]'>
+                    {displayPrice >= SERVICE_FEE_THRESHOLD 
+                      ? `(₦${displayPrice.toLocaleString()} + ₦${SERVICE_FEE_AMOUNT} fee)`
+                      : product.originalPrice && <span className='line-through'>₦{product.originalPrice.toLocaleString()}</span>
+                    }
                   </div>
                 </div>
                 <div className='flex items-center gap-3'>

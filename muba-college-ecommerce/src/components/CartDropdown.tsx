@@ -11,10 +11,13 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
+import { getDisplayPrice, calculateCartPricing, SERVICE_FEE_THRESHOLD, SERVICE_FEE_AMOUNT } from "@/utils/paymentSplit.util";
 
 export const CartDropdown = () => {
-  const { state, removeItem, updateQuantity } = useCart();
-  const [isOpen, setIsOpen] = React.useState(false);
+  const { state, removeItem, updateQuantity, toggleCart } = useCart();
+  
+  // Use global state instead of local state
+  const isOpen = state.isCartOpen;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -38,7 +41,7 @@ export const CartDropdown = () => {
   return (
     <div className='relative'>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => toggleCart()}
         className='relative p-2 text-gray-700 hover:text-[#3bb85e] transition-colors'
       >
         <ShoppingCart className='w-6 h-6' />
@@ -58,7 +61,7 @@ export const CartDropdown = () => {
         <>
           <div
             className='z-40 fixed inset-0'
-            onClick={() => setIsOpen(false)}
+            onClick={() => toggleCart(false)}
           />
 
           <div className='right-0 z-50 absolute flex flex-col bg-white shadow-xl mt-2 border border-gray-200 rounded-lg w-96 max-h-[450px]'>
@@ -87,7 +90,7 @@ export const CartDropdown = () => {
                 <div className='p-8 text-center'>
                   <Package className='mx-auto mb-4 w-16 h-16 text-gray-300' />
                   <p className='mb-4 text-gray-500'>Your cart is empty</p>
-                  <Link href='/marketplace' onClick={() => setIsOpen(false)}>
+                  <Link href='/marketplace' onClick={() => toggleCart(false)}>
                     <Button className='bg-[#3bb85e] hover:bg-[#2d8f4a]'>
                       Browse Products
                     </Button>
@@ -115,9 +118,16 @@ export const CartDropdown = () => {
                           <h4 className='font-medium text-gray-900 text-sm truncate'>
                             {item.product.title}
                           </h4>
-                          <p className='mt-1 font-semibold text-[#3bb85e] text-sm'>
-                            {formatCurrency(item.product.price)}
-                          </p>
+                          <div className='flex flex-col'>
+                            <p className='mt-1 font-semibold text-[#3bb85e] text-sm'>
+                              {formatCurrency(getDisplayPrice(item.product.price))}
+                            </p>
+                            {item.product.price >= SERVICE_FEE_THRESHOLD && (
+                              <span className='text-gray-400 text-[9px]'>
+                                (incl. ₦{SERVICE_FEE_AMOUNT} fee)
+                              </span>
+                            )}
+                          </div>
 
                           {item.selectedVariants &&
                             Object.keys(item.selectedVariants).length > 0 && (
@@ -174,10 +184,20 @@ export const CartDropdown = () => {
 
             {state.items.length > 0 && !state.loading && (
               <div className='bg-gray-50 p-4 border-gray-200 border-t'>
+                <div className='flex justify-between items-center text-sm text-gray-600 mb-1'>
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(state.subtotal)}</span>
+                </div>
+                {calculateCartPricing(state.subtotal).serviceFeeApplies && (
+                  <div className='flex justify-between items-center text-sm text-gray-500 mb-1'>
+                    <span>Service Fee:</span>
+                    <span>+{formatCurrency(SERVICE_FEE_AMOUNT)}</span>
+                  </div>
+                )}
                 <div className='flex justify-between items-center mb-4'>
-                  <span className='font-semibold'>Subtotal:</span>
+                  <span className='font-semibold'>Total:</span>
                   <span className='font-bold text-[#3bb85e] text-xl'>
-                    {formatCurrency(state.subtotal)}
+                    {formatCurrency(calculateCartPricing(state.subtotal).total)}
                   </span>
                 </div>
 
@@ -187,7 +207,7 @@ export const CartDropdown = () => {
                   </p>
                 )}
 
-                <Link href='/checkout' onClick={() => setIsOpen(false)}>
+                <Link href='/checkout' onClick={() => toggleCart(false)}>
                   <Button className='bg-[#3bb85e] hover:bg-[#2d8f4a] w-full'>
                     View Cart
                     <ArrowRight className='ml-2 w-4 h-4' />

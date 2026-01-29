@@ -17,6 +17,12 @@ const OrderSchema = new Schema(
         price: Number,
         name: String,
         img: [],
+        variant_selected: {
+            name: String,
+            options: [String],
+            sku: String,
+            attributes: { type: Map, of: String }
+        },
         status: {
           type: String,
           default: "pending_payment",
@@ -43,5 +49,3 @@ const OrderSchema = new Schema(
 const Orders = models.Orders || model("Orders", OrderSchema);
 
 export default Orders;
-
-
