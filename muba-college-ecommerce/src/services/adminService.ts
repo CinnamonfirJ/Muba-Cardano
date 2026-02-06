@@ -23,6 +23,7 @@ export interface VendorApplication {
   submittedAt: string;
   reviewedAt?: string;
   rejectionReason?: string;
+   createdAt: string;
 }
 
 export interface AdminStats {
@@ -139,7 +140,97 @@ export const adminService = {
     const response = await api.get(`/api/v1/admin/vendors/${applicationId}`);
     return response.data.data;
   },
+
+  // === NEW ANALYTICS ENDPOINTS ===
+
+  // Get accurate platform revenue (MUBA earnings)
+  async getPlatformRevenue(period?: "daily" | "monthly" | "all"): Promise<PlatformRevenueData> {
+    const response = await api.get("/api/v1/admin/analytics/revenue", {
+      params: period ? { period } : {},
+    });
+    return response.data.data;
+  },
+
+  // Get daily transaction volume (last 30 days)
+  async getDailyTransactionVolume(): Promise<DailyVolumeItem[]> {
+    const response = await api.get("/api/v1/admin/analytics/dtv");
+    return response.data.data;
+  },
+
+  // Get vendor leaderboard
+  async getVendorLeaderboard(
+    sortBy: "revenue" | "orders" | "items" = "revenue",
+    limit = 10
+  ): Promise<VendorLeaderboardItem[]> {
+    const response = await api.get("/api/v1/admin/analytics/vendors/leaderboard", {
+      params: { sortBy, limit },
+    });
+    return response.data.data;
+  },
+
+  // Get product stats
+  async getProductStats(): Promise<ProductStatsData> {
+    const response = await api.get("/api/v1/admin/analytics/products");
+    return response.data.data;
+  },
 };
+
+// New Type Definitions for Analytics
+export interface PlatformRevenueData {
+  mubaRevenue: {
+    total: number;
+    platformFees: number;
+    serviceFees: number;
+  };
+  transactions: {
+    gmv: number;
+    orderCount: number;
+    itemsSold: number;
+  };
+  vendorMetrics: {
+    totalEarnings: number;
+    totalPaidOut: number;
+    pendingPayout: number;
+  };
+  period: string;
+  generatedAt: string;
+}
+
+export interface DailyVolumeItem {
+  date: string;
+  gmv: number;
+  platformFee: number;
+  serviceFee: number;
+  mubaRevenue: number;
+  vendorEarnings: number;
+  orderCount: number;
+}
+
+export interface VendorLeaderboardItem {
+  vendorId: string;
+  storeName: string;
+  storeImg?: string;
+  totalRevenue: number;
+  totalOrders: number;
+  totalItems: number;
+}
+
+export interface ProductStatsData {
+  products: {
+    total: number;
+    active: number;
+    outOfStock: number;
+  };
+  stores: {
+    total: number;
+  };
+  users: {
+    customers: number;
+    vendors: number;
+    admins: number;
+    postOffice: number;
+  };
+}
 
 export const AdminService = adminService;
 export default adminService;

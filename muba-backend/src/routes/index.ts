@@ -17,6 +17,7 @@ import BadgeRoutes from "./badges.route.ts";
 import RewardsRoutes from "./rewards.route.ts";
 import UploadRoutes from "./upload.route.ts";
 import AnalyticsRoutes from "./analytics.route.ts";
+import AdminAnalyticsRoutes from "./adminAnalytics.route.ts";
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.use("/vendors", VendorRoutes);
 router.use("/users", UserRoutes);
 router.use("/cart", CartRoutes);
 router.use("/admin", adminRoutes);
+router.use("/admin/analytics", AdminAnalyticsRoutes);
 router.use("/payment", PaymentRoutes);
 router.use("/order", OrdersRoutes);
 router.use("/delivery", DeliveryRoutes);

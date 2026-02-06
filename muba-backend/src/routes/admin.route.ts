@@ -14,48 +14,40 @@ import {
   ApprovePostOfficeApplication, 
   RejectPostOfficeApplication 
 } from "../controllers/admin/postOfficeAdmin.controller.ts";
-// import { authenticateToken } from "../middleware/auth.middleware.ts"; // Comment out if you don't have this
-// import { CheckAdmin } from "../middleware/checkAdmin.middleware.ts";
+
+// Security Middlewares
+import { AuthMiddleware } from "../middlewares/auth.middleware.ts";
+import { CheckAdmin } from "../middlewares/checkAdmin.middleware.ts";
+import { AdminAuditLogger } from "../middlewares/adminAudit.middleware.ts";
 
 const router = express.Router();
 
-// Simple routes without authentication (for testing)
-// Following the pattern: /api/v1/vendors to match frontend expectation
+/**
+ * ADMIN ROUTES - PROTECTED
+ * 
+ * All routes require:
+ * 1. AuthMiddleware - Verifies JWT token
+ * 2. CheckAdmin - Verifies user.role === "admin"
+ * 3. AdminAuditLogger - Logs all actions for security audit
+ */
 
-// Main vendor applications route (matches frontend expectation)
-router.get("/vendors", GetAllVendorApplications); // GET /api/v1/admin/vendors
+// Vendor Application Management
+router.get("/vendors", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetAllVendorApplications);
+router.get("/vendors/pending", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetPendingVendorApplications);
+router.get("/vendors/:_id", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetVendorApplication);
+router.patch("/vendors/:_id/approve", AuthMiddleware, CheckAdmin, AdminAuditLogger, ApproveVendorApplication);
+router.patch("/vendors/:_id/reject", AuthMiddleware, CheckAdmin, AdminAuditLogger, RejectVendorApplication);
 
-// Get pending vendor applications specifically for overview
-router.get("/vendors/pending", GetPendingVendorApplications); // GET /api/v1/admin/vendors/pending
+// Admin Dashboard Stats
+router.get("/stats", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetAdminStats);
 
-// Admin Dashboard Routes
-router.get("/stats", GetAdminStats);
-
-// Single vendor application routes
-router.get("/vendors/:_id", GetVendorApplication);
-router.patch("/vendors/:_id/approve", ApproveVendorApplication);
-router.patch("/vendors/:_id/reject", RejectVendorApplication);
-
-// User Management Routes
-router.get("/users", GetUsersByRole);
-router.patch("/users/:_id/ban", ToggleUserBan);
+// User Management
+router.get("/users", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetUsersByRole);
+router.patch("/users/:_id/ban", AuthMiddleware, CheckAdmin, AdminAuditLogger, ToggleUserBan);
 
 // Post Office Management
-router.get("/post-office/pending", GetPendingPostOfficeApplications);
-router.patch("/post-office/:id/approve", ApprovePostOfficeApplication);
-router.patch("/post-office/:id/reject", RejectPostOfficeApplication);
-
-// PRODUCTION: Routes with authentication (uncomment when ready)
-// router.get("/vendors", authenticateToken, CheckAdmin, GetAllVendorApplications);
-// router.get("/vendors/pending", authenticateToken, CheckAdmin, GetPendingVendorApplications);
-// router.get("/stats", authenticateToken, CheckAdmin, GetAdminStats);
-// router.get("/vendors/:_id", authenticateToken, CheckAdmin, GetVendorApplication);
-// router.patch("/vendors/:_id/approve", authenticateToken, CheckAdmin, ApproveVendorApplication);
-// router.patch("/vendors/:_id/reject", authenticateToken, CheckAdmin, RejectVendorApplication);
-// router.get("/users", authenticateToken, CheckAdmin, GetUsersByRole);
-// router.patch("/users/:_id/ban", authenticateToken, CheckAdmin, ToggleUserBan);
-
-// router.patch("/users/:_id/ban", authenticateToken, CheckAdmin, ToggleUserBan);
+router.get("/post-office/pending", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetPendingPostOfficeApplications);
+router.patch("/post-office/:id/approve", AuthMiddleware, CheckAdmin, AdminAuditLogger, ApprovePostOfficeApplication);
+router.patch("/post-office/:id/reject", AuthMiddleware, CheckAdmin, AdminAuditLogger, RejectPostOfficeApplication);
 
 export default router;
-

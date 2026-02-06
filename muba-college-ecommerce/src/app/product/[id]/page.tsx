@@ -230,7 +230,7 @@ export default function ProductDetailsPage() {
         price: displayPrice, // Variant price overrides base
         sku: selectedVariant?.sku || product.sku,
         images: displayImages, // Variant images override base
-        img: displayImages[0] || product.images[0] // Main thumb
+
     }, quantity, options);
   };
   
@@ -432,7 +432,7 @@ export default function ProductDetailsPage() {
               {/* Thumbnail Images - Desktop (Left Side) */}
               {productImages.length > 1 && (
                 <div className='hidden lg:flex flex-col gap-3 w-20 shrink-0'>
-                  {productImages.map((image, index) => (
+                  {productImages.map((image: string, index: number) => (
                     <button
                       key={index}
                       className={`w-full aspect-square bg-gray-50 rounded-sm overflow-hidden border transition-all duration-200 ${
