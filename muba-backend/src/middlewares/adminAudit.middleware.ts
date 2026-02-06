@@ -51,7 +51,7 @@ export const AdminAuditLogger = async (
   const originalEnd = res.end;
   let responseStatus = 200;
 
-  res.end = function (chunk?: any, encoding?: any, cb?: any) {
+  res.end = function (this: Response, chunk?: any, encoding?: any, cb?: any) {
     responseStatus = res.statusCode;
     
     // Log asynchronously to not block response

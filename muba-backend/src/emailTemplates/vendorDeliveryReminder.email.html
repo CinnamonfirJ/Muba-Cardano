@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delivery Reminder</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2db568;">Delivery Reminder</h2>
+        <p>Hello {{vendor_name}},</p>
+        <p>This is a reminder that you have an order due for delivery/pickup within the next 24 hours.</p>
+        
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Order Ref:</strong> {{ref_id}}</p>
+            <p><strong>Item:</strong> {{item_name}}</p>
+            <p><strong>Customer:</strong> {{customer_name}}</p>
+            <p><strong>Delivery Method:</strong> {{delivery_option}}</p>
+            <p><strong>Due Date:</strong> {{due_date}}</p>
+        </div>
+
+        <p>Please ensure the order is ready or handed over to the post office on time to avoid penalties.</p>
+        <p>Team Muba</p>
+    </div>
+</body>
+</html>

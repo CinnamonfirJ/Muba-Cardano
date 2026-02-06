@@ -18,6 +18,7 @@ import RewardsRoutes from "./rewards.route.ts";
 import UploadRoutes from "./upload.route.ts";
 import AnalyticsRoutes from "./analytics.route.ts";
 import AdminAnalyticsRoutes from "./adminAnalytics.route.ts";
+import CheckoutRoutes from "./checkout.route.ts";
 
 const router = express.Router();
 
@@ -37,6 +38,7 @@ router.use("/badge", BadgeRoutes);
 router.use("/rewards", RewardsRoutes);
 router.use("/upload", UploadRoutes);
 router.use("/analytics", AnalyticsRoutes);
+router.use("/checkout", CheckoutRoutes);
 
 export default router;
 

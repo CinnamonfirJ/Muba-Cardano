@@ -40,7 +40,7 @@ const RequestVendorSchema = new Schema<RequestVendorTypes>({
     enum: ["pending", "accepted", "rejected"],
     default: "pending",
   },
-});
+}, { timestamps: true });
 
 const RequestVendor =
   models.VendorRequests ||

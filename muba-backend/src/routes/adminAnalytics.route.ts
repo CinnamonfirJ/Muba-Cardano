@@ -7,6 +7,7 @@ import {
   GetDailyTransactionVolume,
   GetVendorLeaderboard,
   GetProductStats,
+  GetJointOrdersMetric,
 } from "../controllers/admin/adminAnalytics.controller.ts";
 
 const router = express.Router();
@@ -29,5 +30,8 @@ router.get("/vendors/leaderboard", AuthMiddleware, CheckAdmin, AdminAuditLogger,
 
 // Product & User Stats
 router.get("/products", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetProductStats);
+
+// Joint Orders Metric (multi-vendor orders)
+router.get("/joint-orders", AuthMiddleware, CheckAdmin, AdminAuditLogger, GetJointOrdersMetric);
 
 export default router;

@@ -107,6 +107,22 @@ const VendorOrderSchema = new Schema(
       default: false,
       // Set via pre-save hook or during creation based on delivery_option
     },
+    // --- DELIVERY TIMING SYSTEM ---
+    deliveryDueDate: {
+        type: Date,
+        // Calculated: End of Day (Food) or +5 Days (General)
+    },
+    pickupAvailableFrom: {
+        type: Date,
+    },
+    isFoodItem: {
+        type: Boolean,
+        default: false
+    },
+    reminderSent: {
+        dayBefore: { type: Boolean, default: false },
+        urgent: { type: Boolean, default: false }
+    },
     status: {
       type: String,
       default: "order_confirmed",

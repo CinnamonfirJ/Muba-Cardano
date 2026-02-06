@@ -294,3 +294,94 @@ export const GetProductStats = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Failed to fetch product stats" });
   }
 };
+
+/**
+ * Get Joint Orders Metric
+ * 
+ * Counts orders containing items from more than one unique vendor.
+ * Uses the is_joint_order field if available, otherwise calculates from items.
+ */
+export const GetJointOrdersMetric = async (req: Request, res: Response) => {
+  try {
+    const { period } = req.query;
+    
+    let dateFilter = {};
+    const now = new Date();
+    
+    if (period === "daily") {
+      const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+      dateFilter = { createdAt: { $gte: startOfDay } };
+    } else if (period === "monthly") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      dateFilter = { createdAt: { $gte: startOfMonth } };
+    }
+
+    // Aggregation to count joint vs single-vendor orders
+    const result = await Orders.aggregate([
+      { $match: { status: "paid", ...dateFilter } },
+      {
+        $project: {
+          // Count unique store_ids in items array
+          uniqueVendors: {
+            $size: {
+              $setUnion: [
+                { $ifNull: ["$items.store_id", []] }
+              ]
+            }
+          },
+          is_joint_order: 1,
+          vendor_count: 1,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          jointOrders: {
+            $sum: {
+              $cond: [
+                { $or: [
+                  { $eq: ["$is_joint_order", true] },
+                  { $gt: ["$uniqueVendors", 1] }
+                ]},
+                1,
+                0
+              ]
+            }
+          },
+          singleVendorOrders: {
+            $sum: {
+              $cond: [
+                { $or: [
+                  { $eq: ["$is_joint_order", false] },
+                  { $lte: ["$uniqueVendors", 1] }
+                ]},
+                1,
+                0
+              ]
+            }
+          },
+        },
+      },
+    ]);
+
+    const data = result[0] || { totalOrders: 0, jointOrders: 0, singleVendorOrders: 0 };
+    const jointPercentage = data.totalOrders > 0
+      ? ((data.jointOrders / data.totalOrders) * 100).toFixed(2)
+      : "0.00";
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalOrders: data.totalOrders,
+        jointOrders: data.jointOrders,
+        singleVendorOrders: data.singleVendorOrders,
+        jointOrderPercentage: parseFloat(jointPercentage),
+        period: period || "all",
+      },
+    });
+  } catch (error) {
+    console.error("GetJointOrdersMetric Error:", error);
+    return res.status(500).json({ message: "Failed to fetch joint orders metric" });
+  }
+};

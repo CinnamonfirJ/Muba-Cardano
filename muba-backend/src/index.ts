@@ -59,6 +59,23 @@ dbConn().then(() => {
     import("./services/engagement.service.ts").then(({ EngagementService }) => {
       EngagementService.startWorker();
     });
+
+    // === START AGENDA & EVENT SYSTEM ===
+    import("./queue/agenda.ts").then(async ({ startAgenda }) => {
+        // Define jobs first
+        const { defineEmailJobs } = await import("./queue/email.queue.ts");
+        defineEmailJobs();
+
+        const { defineScheduledJobs, initScheduler } = await import("./queue/scheduler.queue.ts");
+        defineScheduledJobs();
+
+        // Register event handlers
+        await import("./events/handlers/vendor.handler.ts");
+
+        // Start scheduler
+        await startAgenda();
+        await initScheduler();
+    });
   });
 });
 

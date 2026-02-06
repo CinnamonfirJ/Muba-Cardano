@@ -20,6 +20,13 @@ import {
   RateStore,
   GetStoreReviews,
 } from "../controllers/stores/engagement.controller.ts";
+import {
+  CreateMeetupLocation,
+  GetMeetupLocations,
+  GetMeetupLocation,
+  UpdateMeetupLocation,
+  DeleteMeetupLocation,
+} from "../controllers/vendors/meetupLocation.controller.ts";
 
 const router = express.Router();
 
@@ -37,6 +44,16 @@ router.route("/:_id/follow").post(AuthMiddleware, FollowStore);
 router.route("/:_id/unfollow").post(AuthMiddleware, UnfollowStore);
 router.route("/:_id/rate").post(AuthMiddleware, RateStore);
 router.route("/:_id/reviews").get(GetStoreReviews);
+
+// === MEETUP LOCATION ROUTES ===
+// Public: anyone can view a store's meetup locations
+router.get("/:storeId/meetup-locations", GetMeetupLocations);
+router.get("/:storeId/meetup-locations/:locationId", GetMeetupLocation);
+
+// Protected: only store owner can manage meetup locations
+router.post("/:storeId/meetup-locations", AuthMiddleware, CheckVendor, VerifyStoreOwner, CreateMeetupLocation);
+router.put("/:storeId/meetup-locations/:locationId", AuthMiddleware, CheckVendor, VerifyStoreOwner, UpdateMeetupLocation);
+router.delete("/:storeId/meetup-locations/:locationId", AuthMiddleware, CheckVendor, VerifyStoreOwner, DeleteMeetupLocation);
 
 router
   .route("/:_id") // for individual store

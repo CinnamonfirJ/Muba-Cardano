@@ -23,7 +23,7 @@ export interface VendorApplication {
   submittedAt: string;
   reviewedAt?: string;
   rejectionReason?: string;
-   createdAt: string;
+  createdAt: string;
 }
 
 export interface AdminStats {

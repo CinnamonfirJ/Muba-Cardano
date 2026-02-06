@@ -13,6 +13,7 @@ import type { SendEmailTypes } from "../../dto/email.dto.ts";
 import { SendEmail } from "../../utils/sendEmail.utils.ts";
 import { uploadToCloudinary } from "../../middlewares/upload.middleware.ts";
 import { isValidMatricNumber } from "../../utils/validation.util.ts";
+import { eventBus, EVENTS } from "../../events/eventBus.ts";
 
 export const RequestToBeVendor = async (req: Request, res: Response) => {
   try {
@@ -115,52 +116,20 @@ export const RequestToBeVendor = async (req: Request, res: Response) => {
       { new: true, runValidators: true }
     );
 
-    // Send emails
-    try {
-      // 1. Send confirmation to Applicant
-      const applicantTemplatePath = path.join(__dirname, "../../emailTemplates/vendorRequest.email.html");
-      const applicantTemplate = fs.readFileSync(applicantTemplatePath, "utf-8");
-      const applicantMsg = applicantTemplate.replace("{{vendor_name}}", firstname);
-      
-      const applicantEmailData: SendEmailTypes = {
+    // Emit Event for Async Email Processing
+    eventBus.emit(EVENTS.VENDOR.REQUEST_CREATED, {
+        firstname,
         email,
-        title: "Vendor Application Received",
-        html: applicantMsg,
-      };
-      await SendEmail(applicantEmailData);
-
-      // 2. Send notification to Admin
-      if (getAdmin && getAdmin.email) {
-        const adminTemplatePath = path.join(__dirname, "../../emailTemplates/vendorApplicationAdmin.email.html");
-        let adminMsg = fs.readFileSync(adminTemplatePath, "utf-8");
-
-        const cacSection = cac_url 
-          ? `<a href="${cac_url}" class="button">View CAC</a>`
-          : "";
-
-        adminMsg = adminMsg
-          .replace("{{firstname}}", firstname)
-          .replace("{{email}}", email)
-          .replace("{{matric_number}}", matric_number)
-          .replace("{{department}}", department || "N/A")
-          .replace("{{faculty}}", faculty || "N/A")
-          .replace("{{valid_id_url}}", valid_id_url)
-          .replace("{{picture_url}}", picture_url)
-          .replace("{{cac_section}}", cacSection);
-
-        const adminEmailData: SendEmailTypes = {
-          email: getAdmin.email,
-          title: "New Vendor Application Submitted",
-          html: adminMsg,
-        };
-        await SendEmail(adminEmailData);
-      } else {
-        console.error("Admin email not found, skipping admin notification");
-      }
-
-    } catch (emailError) {
-      console.error("Failed to send emails:", emailError);
-    }
+        matric_number,
+        department,
+        faculty,
+        valid_id: valid_id_url,
+        picture: picture_url,
+        cac: cac_url,
+        adminEmail: getAdmin?.email
+    });
+    
+    console.log(`[VendorRequest] Event ${EVENTS.VENDOR.REQUEST_CREATED} emitted for ${email}`);
 
     return res.status(201).json({
       message: "Request Sent Successfully",

@@ -1,9 +1,11 @@
 import Orders from "../models/order.model.ts";
 import VendorOrders from "../models/vendorOrder.model.ts";
 import PaymentIntents from "../models/paymentIntent.model.ts";
+import Products from "../models/products.model.ts"; // Import Products
 import { orderId as generateRefId } from "../utils/genId.utils.ts";
 import Payments from "../models/payment.models.ts";
 import { calculateSplit } from "../utils/paymentSplit.util.ts";
+import { eventBus, EVENTS } from "../events/eventBus.ts"; // Import EventBus
 
 /**
  * Creates Order and VendorOrder records with 'pending_payment' status.
@@ -53,6 +55,41 @@ export const createPendingOrder = async (intentId: string) => {
             s.store_id?.toString() === storeId
         );
 
+        // Check for Food Items to determine Delivery Due Date
+        let isFoodItem = false;
+        try {
+            // Check categories from Product DB to be safe
+            const productIds = items.map(i => i.product_id);
+            const products = await Products.find({ _id: { $in: productIds } }).select('category');
+            
+            isFoodItem = products.some(p => 
+                p.category?.some((c: string) => 
+                    c.toLowerCase().includes('food') || 
+                    c.toLowerCase().includes('meal') ||
+                    c.toLowerCase().includes('drink') ||
+                    c.toLowerCase().includes('snack')
+                )
+            );
+        } catch (err) {
+            console.error("[OrderProcessor] Error checking food category:", err);
+            // Fallback: check item name/variant if category fetch fails?
+        }
+
+        // Calculate Delivery Due Date
+        const now = new Date();
+        let deliveryDueDate: Date;
+        
+        if (isFoodItem) {
+            // End of TODAY (Food)
+            deliveryDueDate = new Date(now);
+            deliveryDueDate.setHours(23, 59, 59, 999);
+        } else {
+            // Today + 5 Days (General)
+            deliveryDueDate = new Date(now);
+            deliveryDueDate.setDate(now.getDate() + 5);
+            deliveryDueDate.setHours(23, 59, 59, 999);
+        }
+
         // Calculate financial breakdown for this vendor
         const vendorSubtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
         const vendorSplit = calculateSplit(vendorSubtotal);
@@ -74,9 +111,14 @@ export const createPendingOrder = async (intentId: string) => {
             delivery_fee: 0,
             total_amount: vendorSubtotal,
             platform_fee: vendorSplit.platform_fee,
-            vendor_earnings: vendorSplit.vendor_amount,
+            vendor_earnings: vendorSplit.vendor_amount, // Clean earnings
             status: "pending_payment",
-            paystack_subaccount_code: splitInfo?.subaccount
+            paystack_subaccount_code: splitInfo?.subaccount,
+            
+            // New Delivery Logic Fields
+            isFoodItem,
+            deliveryDueDate,
+            reminderSent: { dayBefore: false, urgent: false }
         });
     }
 
@@ -133,8 +175,9 @@ export const fulfillOrder = async (reference: string) => {
         await intent.save();
     }
 
-    // Note: Cart is already cleared during payment initialization
-    // See init.controller.ts step 6c
+    // 5. Emit Event: Order Paid
+    eventBus.emit(EVENTS.ORDER.PAID, { orderId: order._id, userId: order.user_id, email: intent?.email });
+    console.log(`[OrderProcessor] 🔔 Event ${EVENTS.ORDER.PAID} emitted.`);
 
     return order;
 };
